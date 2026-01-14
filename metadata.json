@@ -1,0 +1,8 @@
+{
+  "name": "Prototipo Cidade Conectada Dashboard",
+  "description": "Um dashboard moderno e animado para gestão urbana, com contadores dinâmicos, gráficos de eficiência e notificações em tempo real.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
