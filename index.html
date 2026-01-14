@@ -10,17 +10,26 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #f3f4f6;
+        background-color: #f8fafc;
         margin: 0;
         overflow-x: hidden;
       }
       .blue-gradient-bg {
         background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
       }
-      /* Smooth transitions for highlight ticker */
-      .highlight-enter { transform: translateY(100%); opacity: 0; }
-      .highlight-active { transform: translateY(0); opacity: 1; }
-      .highlight-exit { transform: translateY(-100%); opacity: 0; }
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
     </style>
     <script type="importmap">
 {
