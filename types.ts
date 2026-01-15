@@ -1,11 +1,16 @@
 
+export interface SectorParticipation {
+  sigla: string;
+  percentage: number;
+  color: string;
+}
+
 export interface ServiceMetric {
   label: string;
   days: number;
   totalPercentage: number;
-  operational: number;
-  fiscalization: number;
-  administrative: number;
+  totalSolicitations: number;
+  sectors: SectorParticipation[];
 }
 
 export interface DeptEfficiency {
