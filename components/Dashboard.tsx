@@ -13,7 +13,10 @@ import {
   User,
   Activity,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Timer,
+  AlertTriangle,
+  XCircle
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 import { ServiceMetric } from '../types';
@@ -21,7 +24,7 @@ import { ServiceMetric } from '../types';
 const METRICS_DATA: ServiceMetric[] = [
   { 
     label: 'Limpeza Urbana', 
-    days: 2.5, 
+    days: 1.2, 
     totalPercentage: 75, 
     totalSolicitations: 12540,
     sectors: [
@@ -32,7 +35,7 @@ const METRICS_DATA: ServiceMetric[] = [
   },
   { 
     label: 'Iluminação Pública', 
-    days: 1.8, 
+    days: 0.8, 
     totalPercentage: 60, 
     totalSolicitations: 8920,
     sectors: [
@@ -43,7 +46,7 @@ const METRICS_DATA: ServiceMetric[] = [
   },
   { 
     label: 'Poda de Árvores', 
-    days: 4.2, 
+    days: 4.5, 
     totalPercentage: 45, 
     totalSolicitations: 5410,
     sectors: [
@@ -53,7 +56,7 @@ const METRICS_DATA: ServiceMetric[] = [
   },
   { 
     label: 'Drenagem Pluvial', 
-    days: 3.0, 
+    days: 3.2, 
     totalPercentage: 30, 
     totalSolicitations: 3215,
     sectors: [
@@ -63,7 +66,7 @@ const METRICS_DATA: ServiceMetric[] = [
   },
   { 
     label: 'Manutenção Viária', 
-    days: 3.5, 
+    days: 2.8, 
     totalPercentage: 55, 
     totalSolicitations: 10100,
     sectors: [
@@ -93,7 +96,7 @@ const METRICS_DATA: ServiceMetric[] = [
   },
   { 
     label: 'Coleta de Resíduos', 
-    days: 0.8, 
+    days: 0.5, 
     totalPercentage: 90, 
     totalSolicitations: 15400,
     sectors: [
@@ -151,10 +154,16 @@ const Dashboard: React.FC = () => {
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
+  const getSLAStatus = (days: number) => {
+    if (days <= 1.5) return { color: 'text-emerald-500', bg: 'bg-emerald-50', icon: <CheckCircle size={14} />, label: 'NO PRAZO' };
+    if (days <= 3.0) return { color: 'text-amber-500', bg: 'bg-amber-50', icon: <AlertTriangle size={14} />, label: 'ATENÇÃO' };
+    return { color: 'text-red-500', bg: 'bg-red-50', icon: <XCircle size={14} />, label: 'CRÍTICO' };
+  };
+
   return (
     <div className={`transition-all duration-500 flex flex-col bg-[#f8fafc] ${isFullScreen ? 'h-screen overflow-hidden' : 'min-h-screen pb-20'}`}>
       
-      {/* HEADER: flex-none garante que ele não "roube" o espaço do conteúdo inferior em Fullscreen */}
+      {/* HEADER */}
       <header className={`blue-gradient-bg text-white relative overflow-hidden transition-all duration-700 rounded-b-[2rem] md:rounded-b-[4rem] flex-none
         ${isFullScreen ? 'rounded-none px-10 pt-8 pb-12' : 'px-6 md:px-12 2xl:px-24 pt-8 md:pt-12 pb-32 md:pb-48 2xl:pb-56'}`}>
         
@@ -237,7 +246,7 @@ const Dashboard: React.FC = () => {
         </div>
       </header>
 
-      {/* KPI CARDS: Espaçamento reduzido em Fullscreen para dar lugar à lista */}
+      {/* KPI CARDS */}
       <div className={`max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 relative z-20 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 transition-all
         ${isFullScreen ? 'mt-6' : '-mt-16 md:-mt-24 2xl:-mt-28'}`}>
         <MetricCard label="NOVAS SOLICITAÇÕES" value={total} icon={<FileText />} color="blue" isFS={isFullScreen} />
@@ -245,33 +254,33 @@ const Dashboard: React.FC = () => {
         <MetricCard label="CONCLUÍDAS" value={2450} icon={<CheckCircle />} color="emerald" isFS={isFullScreen} />
       </div>
 
-      {/* MAIN CONTENT: flex-1 e overflow-hidden para scroll interno */}
-      <main className={`max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 flex flex-col relative z-20 transition-all ${isFullScreen ? 'mt-8 flex-1 overflow-hidden mb-4' : 'mt-8 md:mt-12'}`}>
+      {/* MAIN CONTENT AREA */}
+      <main className={`max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 flex flex-col lg:flex-row gap-6 md:gap-8 relative z-20 transition-all ${isFullScreen ? 'mt-8 flex-1 overflow-hidden mb-4' : 'mt-8 md:mt-12'}`}>
         
-        <section className={`w-full bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden transition-all
-          ${isFullScreen ? 'h-full p-8' : 'p-10 md:p-14 2xl:p-16'}`}>
+        {/* SERVIÇOS OFERECIDOS (Ocupa ~65% da largura) */}
+        <section className={`lg:w-2/3 bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden transition-all
+          ${isFullScreen ? 'h-full p-8' : 'p-10 md:p-12'}`}>
           
           <div className={`flex justify-between items-center gap-4 ${isFullScreen ? 'mb-8' : 'mb-10'}`}>
             <div className="flex items-center gap-4">
                <div className={`bg-blue-600 rounded-full hidden md:block w-1.5 h-8`}></div>
-               <h3 className={`font-black text-gray-900 tracking-tighter transition-all ${isFullScreen ? 'text-3xl' : 'text-2xl md:text-3xl 2xl:text-5xl'}`}>Serviços oferecidos e participação setorial</h3>
+               <h3 className={`font-black text-gray-900 tracking-tighter transition-all ${isFullScreen ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl 2xl:text-4xl'}`}>Serviços e Participação</h3>
             </div>
-            <div className="hidden sm:flex gap-4 font-black text-gray-400 uppercase tracking-widest bg-gray-50 rounded-xl border border-gray-100 p-3 text-[9px]">
+            <div className="hidden xl:flex gap-4 font-black text-gray-400 uppercase tracking-widest bg-gray-50 rounded-xl border border-gray-100 p-3 text-[9px]">
               <div className="flex items-center gap-2"><div className="bg-blue-600 rounded-sm w-2.5 h-2.5" /> PRINCIPAL</div>
               <div className="flex items-center gap-2"><div className="bg-indigo-500 rounded-sm w-2.5 h-2.5" /> APOIO</div>
               <div className="flex items-center gap-2"><div className="bg-indigo-300 rounded-sm w-2.5 h-2.5" /> ADM</div>
             </div>
           </div>
 
-          {/* ÁREA DE SCROLL: flex-1 garante que ocupe todo o espaço disponível na seção */}
-          <div className={`transition-all pr-4 pl-1 custom-scrollbar overflow-y-auto flex-1 ${isFullScreen ? 'space-y-4' : 'space-y-6 md:space-y-8'}`}>
+          <div className={`transition-all pr-4 pl-1 custom-scrollbar overflow-y-auto flex-1 ${isFullScreen ? 'space-y-4' : 'space-y-6'}`}>
             {METRICS_DATA.map((metric, idx) => (
-              <div key={metric.label} className="group flex flex-col md:flex-row md:items-center gap-2 md:gap-8 border-b border-gray-50 pb-5 last:border-0 last:pb-0">
-                <div className="font-bold text-gray-300 shrink-0 w-8 text-base md:text-lg">
+              <div key={metric.label} className="group flex flex-col md:flex-row md:items-center gap-2 md:gap-6 border-b border-gray-50 pb-5 last:border-0 last:pb-0">
+                <div className="font-bold text-gray-300 shrink-0 w-8 text-sm md:text-base">
                   {(idx + 1).toString().padStart(2, '0')}
                 </div>
-                <div className="shrink-0 md:w-48 lg:w-64">
-                  <h4 className={`font-black text-gray-800 group-hover:text-blue-600 transition-all ${isFullScreen ? 'text-lg' : 'text-base md:text-xl'}`}>
+                <div className="shrink-0 md:w-40 lg:w-48 xl:w-56">
+                  <h4 className={`font-black text-gray-800 group-hover:text-blue-600 transition-all ${isFullScreen ? 'text-lg' : 'text-base'}`}>
                     {metric.label}
                   </h4>
                 </div>
@@ -283,21 +292,57 @@ const Dashboard: React.FC = () => {
                         className={`${sector.color} h-full transition-all duration-1000 flex items-center justify-center relative border-r border-white/10 last:border-0`} 
                         style={{ width: `${sector.percentage}%` }}
                       >
-                        <span className={`font-black text-white/95 text-[8px] md:text-[10px] drop-shadow-sm whitespace-nowrap`}>
+                        <span className={`font-black text-white/95 text-[8px] md:text-[9px] drop-shadow-sm whitespace-nowrap px-1`}>
                           {sector.sigla} {sector.percentage}%
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="text-right shrink-0 md:w-32">
-                  <p className="font-black text-gray-400 uppercase tracking-widest text-[9px] md:text-[10px]">
-                    <span className={`text-gray-900 block font-black mb-0.5 ${isFullScreen ? 'text-lg' : 'text-base'}`}>{metric.totalSolicitations.toLocaleString('pt-BR')}</span>
-                    solicitações
+                <div className="text-right shrink-0 md:w-24">
+                  <p className="font-black text-gray-400 uppercase tracking-widest text-[8px] md:text-[9px]">
+                    <span className={`text-gray-900 block font-black mb-0.5 ${isFullScreen ? 'text-base' : 'text-sm'}`}>{metric.totalSolicitations.toLocaleString('pt-BR')}</span>
+                    solicit.
                   </p>
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* TEMPO DE RESPOSTA (SLA) (Ocupa ~35% da largura) */}
+        <section className={`lg:w-1/3 bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden transition-all
+          ${isFullScreen ? 'h-full p-8' : 'p-10 md:p-12'}`}>
+          
+          <div className="flex items-center gap-4 mb-8">
+             <div className="bg-blue-50 p-3 rounded-2xl text-blue-600">
+                <Timer size={24} />
+             </div>
+             <div>
+                <h3 className={`font-black text-gray-900 tracking-tighter ${isFullScreen ? 'text-2xl' : 'text-xl'}`}>Tempo de Resposta</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SLA POR SERVIÇO</p>
+             </div>
+          </div>
+
+          <div className={`transition-all pr-4 pl-1 custom-scrollbar overflow-y-auto flex-1 space-y-4`}>
+            {METRICS_DATA.map((metric, idx) => {
+              const sla = getSLAStatus(metric.days);
+              return (
+                <div key={`sla-${idx}`} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100 group hover:bg-white hover:shadow-lg transition-all">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-black text-gray-800 truncate mb-1">{metric.label}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`font-black text-lg ${sla.color}`}>{metric.days}</span>
+                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">DIAS MÉDIO</span>
+                    </div>
+                  </div>
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${sla.bg} ${sla.color} border border-current/10 shrink-0`}>
+                    {sla.icon}
+                    <span className="text-[10px] font-black tracking-widest">{sla.label}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       </main>
