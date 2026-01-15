@@ -16,10 +16,49 @@ import {
   Minimize2,
   Timer,
   AlertTriangle,
-  XCircle
+  XCircle,
+  Map,
+  ZapOff,
+  ChevronRight,
+  Menu,
+  X,
+  Search,
+  Settings,
+  ArrowDownRight,
+  BarChart3,
+  Play,
+  Pause,
+  ArrowUp,
+  ArrowDown,
+  AlertCircle,
+  TrendingDown,
+  Info,
+  History,
+  Users,
+  ShieldAlert,
+  Target
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
-import { ServiceMetric } from '../types';
+import { ServiceMetric, NotificationItem } from '../types';
+
+// Definition of Highlight interface to fix property errors on lines 191-194 and 320-324
+interface Highlight {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}
+
+// Dados Geográficos Mockados Expandidos
+const NEIGHBORHOODS = [
+  { id: 'mangabeira', name: 'Mangabeira', path: 'M 450 150 L 520 180 L 550 280 L 500 350 L 420 320 L 400 220 Z', solicitations: 50000, appointments: 30000, registrations: 20000, docs: 20000 },
+  { id: 'valentina', name: 'Valentina', path: 'M 400 320 L 500 350 L 480 450 L 380 420 L 350 350 Z', solicitations: 25000, appointments: 15000, registrations: 10000, docs: 5000 },
+  { id: 'geisel', name: 'Geisel', path: 'M 300 280 L 400 320 L 350 350 L 280 340 L 250 300 Z', solicitations: 12000, appointments: 8000, registrations: 4000, docs: 2000 },
+  { id: 'centro', name: 'Centro', path: 'M 200 150 L 280 140 L 300 220 L 250 250 L 180 200 Z', solicitations: 8000, appointments: 5000, registrations: 3000, docs: 1000 },
+  { id: 'torre', name: 'Torre', path: 'M 280 140 L 350 120 L 400 180 L 300 220 Z', solicitations: 18000, appointments: 12000, registrations: 6000, docs: 4000 },
+  { id: 'bessa', name: 'Bessa', path: 'M 350 50 L 420 60 L 450 150 L 350 120 Z', solicitations: 35000, appointments: 22000, registrations: 13000, docs: 8000 },
+  { id: 'manaira', name: 'Manaíra', path: 'M 420 60 L 480 80 L 520 180 L 450 150 Z', solicitations: 42000, appointments: 28000, registrations: 14000, docs: 10000 },
+  { id: 'cabo-branco', name: 'Cabo Branco', path: 'M 480 80 L 550 100 L 580 200 L 520 180 Z', solicitations: 15000, appointments: 10000, registrations: 5000, docs: 2000 },
+];
 
 const METRICS_DATA: ServiceMetric[] = [
   { 
@@ -106,16 +145,63 @@ const METRICS_DATA: ServiceMetric[] = [
   },
 ];
 
-interface Highlight {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}
+// Dados para a Página de Baixa Eficiência (Ordenados por prioridade/pior desempenho)
+const CRITICAL_ANALYSIS = [
+  { id: '1', label: 'Drenagem Pluvial', resolution: 28, sla: 8.5, pendencyGrowth: 15, bottleneck: 'SEURB', status: 'critical', volume: 'médio', solicitations: 3215, sectorsInvolved: ['SEURB', 'SF', 'DEFESA CIVIL'] },
+  { id: '2', label: 'Poda de Árvores', resolution: 35, sla: 6.1, pendencyGrowth: 22, bottleneck: 'EM', status: 'critical', volume: 'médio', solicitations: 5410, sectorsInvolved: ['EM', 'SEURB', 'SEMAM'] },
+  { id: '3', label: 'Manutenção Viária', resolution: 42, sla: 5.2, pendencyGrowth: -5, bottleneck: 'SEMOB', status: 'attention', volume: 'alto', solicitations: 10100, sectorsInvolved: ['SEMOB', 'SEURB', 'SF'] },
+  { id: '4', label: 'Sinalização', resolution: 58, sla: 4.8, pendencyGrowth: 2, bottleneck: 'SEMOB', status: 'attention', volume: 'baixo', solicitations: 4800, sectorsInvolved: ['SEMOB', 'SEURB'] },
+  { id: '5', label: 'Saúde Animal', resolution: 65, sla: 3.5, pendencyGrowth: 8, bottleneck: 'SESAU', status: 'ok', volume: 'anormal_baixo', solicitations: 2150, sectorsInvolved: ['SESAU'] },
+  { id: '6', label: 'Limpeza Urbana', resolution: 88, sla: 1.8, pendencyGrowth: -12, bottleneck: 'EM', status: 'ok', volume: 'alto', solicitations: 12540, sectorsInvolved: ['EM', 'SEURB', 'SF'] },
+];
+
+const SECTOR_BOTTLENECKS = [
+  { id: 's1', name: 'SEURB', impact: 'alto', pending: 850, capacity: 65, avgResponse: 7.2, resolutionRate: 45, users: 42, services: ['Drenagem Pluvial', 'Manutenção Viária', 'Iluminação'] },
+  { id: 's2', name: 'EM', impact: 'médio', pending: 1100, capacity: 88, avgResponse: 3.5, resolutionRate: 78, users: 120, services: ['Limpeza Urbana', 'Poda de Árvores', 'Coleta'] },
+  { id: 's3', name: 'SEMOB', impact: 'médio', pending: 420, capacity: 75, avgResponse: 5.1, resolutionRate: 62, users: 65, services: ['Manutenção Viária', 'Sinalização'] },
+  { id: 's4', name: 'SESAU', impact: 'baixo', pending: 95, capacity: 92, avgResponse: 1.5, resolutionRate: 85, users: 15, services: ['Saúde Animal'] },
+];
+
+const RECOMMENDATIONS = [
+  { id: 'r1', title: 'Remanejar pessoal para SEURB', description: 'O tempo de resposta em Drenagem Pluvial subiu 15%. Sugerimos mover 5 técnicos do setor EM temporariamente.', category: 'RECURSOS' },
+  { id: 'r2', title: 'Priorizar Poda em Mangabeira', description: 'Mangabeira concentra 40% das podas atrasadas. Enviar equipe extra para força-tarefa.', category: 'LOGÍSTICA' },
+  { id: 'r3', title: 'Revisar SLA de Sinalização', description: 'Volume anormalmente baixo de solicitações pode indicar falha no app de reporte nesta área.', category: 'SISTEMA' },
+];
+
+const RECOMMENDATION_HISTORY = [
+  { id: 'h1', date: '22/05 08:30', action: 'Alerta enviado para SEURB', result: 'Equipe mobilizada' },
+  { id: 'h2', date: '21/05 14:20', action: 'Redirecionamento de frota EM', result: 'Redução de 5% no atraso' },
+  { id: 'h3', date: '20/05 10:15', action: 'Alerta de baixa demanda SESAU', result: 'Verificação técnica concluída' },
+];
+
+// Mock data for NOTIFICATION_HISTORY to fix error on line 729
+const NOTIFICATION_HISTORY: NotificationItem[] = [
+  { id: 'n1', time: '08:45', title: 'Equipe enviada para reparo de cratera', department: 'SEMOB', status: 'processing' },
+  { id: 'n2', time: '09:12', title: 'Manutenção de iluminação concluída', department: 'SEURB', status: 'done' },
+  { id: 'n3', time: '10:05', title: 'Alerta de alagamento em área crítica', department: 'DEFESA CIVIL', status: 'new' },
+  { id: 'n4', time: '10:30', title: 'Coleta extraordinária de lixo', department: 'EM', status: 'done' },
+  { id: 'n5', time: '11:15', title: 'Poda de árvore em andamento', department: 'EM', status: 'processing' },
+];
 
 const Dashboard: React.FC = () => {
   const [total, setTotal] = useState(1025880);
+  const [criticalTotal, setCriticalTotal] = useState(1450);
   const [highlightIndex, setHighlightIndex] = useState(0);
+  const [recommendationIndex, setRecommendationIndex] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [activeTab, setActiveTab] = useState('solicitacoes');
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isActionHistoryOpen, setIsActionHistoryOpen] = useState(false);
+  
+  // Modais de detalhamento
+  const [selectedServiceForModal, setSelectedServiceForModal] = useState<typeof CRITICAL_ANALYSIS[0] | null>(null);
+  const [selectedSectorForModal, setSelectedSectorForModal] = useState<typeof SECTOR_BOTTLENECKS[0] | null>(null);
+
+  // Estados do Mapa
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<typeof NEIGHBORHOODS[0] | null>(null);
+  const [mapMode, setMapMode] = useState<'solicitacoes' | 'calor'>('solicitacoes');
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [autoIndex, setAutoIndex] = useState(0);
   
   const highlights: Highlight[] = [
     { icon: <ArrowUpRight size={16} />, label: 'TENDÊNCIA', value: '+12% em Poda de Árvore' },
@@ -124,9 +210,17 @@ const Dashboard: React.FC = () => {
     { icon: <Star size={16} />, label: 'MELHOR AVALIADO', value: 'Iluminação Pública (4.9)' },
   ];
 
+  const navItems = [
+    { id: 'solicitacoes', label: 'Solicitações', icon: <FileText size={18} /> },
+    { id: 'mapa', label: 'Mapa da Cidade', icon: <Map size={18} /> },
+    { id: 'avaliacoes', label: 'Avaliações', icon: <Star size={18} /> },
+    { id: 'eficiencia', label: 'Baixa Eficiência', icon: <ZapOff size={18} /> },
+  ];
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTotal(prev => prev + Math.floor(Math.random() * 5));
+      setCriticalTotal(prev => prev + (Math.random() > 0.7 ? 1 : 0));
     }, 2000);
     return () => clearInterval(interval);
   }, []);
@@ -134,6 +228,7 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setHighlightIndex((prev) => (prev + 1) % highlights.length);
+      setRecommendationIndex((prev) => (prev + 1) % RECOMMENDATIONS.length);
     }, 5000);
     return () => clearInterval(interval);
   }, [highlights.length]);
@@ -148,221 +243,632 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const handleFsChange = () => setIsFullScreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
-  }, []);
-
-  const getSLAStatus = (days: number) => {
-    if (days <= 1.5) return { color: 'text-emerald-500', bg: 'bg-emerald-50', icon: <CheckCircle size={14} />, label: 'NO PRAZO' };
-    if (days <= 3.0) return { color: 'text-amber-500', bg: 'bg-amber-50', icon: <AlertTriangle size={14} />, label: 'ATENÇÃO' };
-    return { color: 'text-red-500', bg: 'bg-red-50', icon: <XCircle size={14} />, label: 'CRÍTICO' };
+  const getMapColor = (count: number) => {
+    if (mapMode === 'calor') {
+      if (count >= 1000) return '#1e3a8a';
+      if (count >= 500) return '#2563eb';
+      if (count >= 100) return '#60a5fa';
+      if (count >= 1) return '#bfdbfe';
+      return '#f1f5f9';
+    }
+    if (count >= 40000) return '#1e3a8a';
+    if (count >= 25000) return '#3b82f6';
+    if (count >= 10000) return '#93c5fd';
+    if (count >= 1) return '#dbeafe';
+    return '#f1f5f9';
   };
 
   return (
     <div className={`transition-all duration-500 flex flex-col bg-[#f8fafc] ${isFullScreen ? 'h-screen overflow-hidden' : 'min-h-screen pb-20'}`}>
       
-      {/* HEADER */}
-      <header className={`blue-gradient-bg text-white relative overflow-hidden transition-all duration-700 rounded-b-[2rem] md:rounded-b-[4rem] flex-none
-        ${isFullScreen ? 'rounded-none px-10 pt-8 pb-12' : 'px-6 md:px-12 2xl:px-24 pt-8 md:pt-12 pb-32 md:pb-48 2xl:pb-56'}`}>
+      {/* HEADER PRINCIPAL */}
+      <header className={`${activeTab === 'eficiencia' ? 'bg-slate-900 border-b border-white/5' : 'blue-gradient-bg'} text-white relative overflow-hidden transition-all duration-700 rounded-b-[2rem] md:rounded-b-[4rem] flex-none
+        ${isFullScreen ? 'rounded-none px-10 pt-8 pb-12' : (activeTab === 'mapa' || activeTab === 'eficiencia' ? 'px-6 md:px-12 2xl:px-24 pt-8 md:pt-10 pb-8' : 'px-6 md:px-12 2xl:px-24 pt-8 md:pt-10 pb-32 md:pb-48 2xl:pb-56')}`}>
         
         <div className="absolute top-0 right-0 w-[500px] h-[500px] 2xl:w-[1200px] 2xl:h-[1200px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
         
-        <nav className={`flex items-center justify-between relative z-10 max-w-[2000px] mx-auto w-full transition-all ${isFullScreen ? 'mb-10' : 'mb-8'}`}>
-          <div className="flex items-center gap-3 md:gap-5">
-            <div className={`bg-white/10 rounded-xl backdrop-blur-md border border-white/20 shadow-xl p-2`}>
-              <LayoutGrid size={isFullScreen ? 28 : 24} />
+        {/* TOP NAVIGATION BAR */}
+        <nav className={`flex items-center justify-between relative z-10 max-w-[2000px] mx-auto w-full transition-all ${(activeTab === 'mapa' || activeTab === 'eficiencia') ? 'mb-0' : 'mb-12'}`}>
+          <div className="flex items-center gap-10">
+            <div className="flex items-center gap-3">
+              <div className={`${activeTab === 'eficiencia' ? 'bg-red-600/20 border-red-500/30' : 'bg-white/15 border-white/20'} rounded-xl backdrop-blur-md border p-2 transition-colors`}>
+                <LayoutGrid size={isFullScreen ? 28 : 22} className={activeTab === 'eficiencia' ? 'text-red-400' : 'text-white'} />
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="font-black text-xl tracking-tighter leading-none">Cidade<span className={`font-light ${activeTab === 'eficiencia' ? 'text-red-400' : 'text-blue-300'}`}>Conectada</span></h1>
+              </div>
             </div>
-            <div>
-              <h1 className={`font-black tracking-tighter leading-none transition-all ${isFullScreen ? 'text-2xl' : 'text-xl md:text-3xl'}`}>Cidade<span className="text-blue-300 font-light">Conectada</span></h1>
-              <p className={`font-bold text-blue-200/60 uppercase tracking-[0.2em] mt-0.5 text-[8px] md:text-[10px]`}>Gestão Inteligente v4.0</p>
+
+            <div className={`hidden lg:flex items-center ${activeTab === 'eficiencia' ? 'bg-white/5' : 'bg-black/10'} backdrop-blur-md rounded-2xl p-1 border border-white/5`}>
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl transition-all duration-300 text-sm font-bold tracking-tight
+                    ${activeTab === item.id 
+                      ? 'bg-white text-slate-900 shadow-xl' 
+                      : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                >
+                  <span className={activeTab === item.id ? (activeTab === 'eficiencia' ? 'text-red-600' : 'text-blue-600') : ''}>{item.icon}</span>
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
+
           <div className="flex items-center gap-4">
             <button 
               onClick={toggleFullScreen}
-              className={`bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 transition-all flex items-center gap-3 p-2.5 px-5`}
+              className={`bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 transition-all flex items-center gap-3 p-2.5 px-4`}
             >
               {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-              <span className="font-bold text-[10px] uppercase tracking-widest">{isFullScreen ? 'REDUZIR' : 'MODO PAINEL'}</span>
+              <span className="hidden sm:inline font-bold text-[10px] uppercase tracking-widest">{isFullScreen ? 'REDUZIR' : 'EXPANDIR'}</span>
             </button>
-            <div className={`rounded-xl bg-white/10 flex items-center justify-center border border-white/10 w-9 h-9`}>
-              <User size={18} />
+            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+              <div className={`rounded-xl ${activeTab === 'eficiencia' ? 'bg-red-600' : 'bg-blue-600'} flex items-center justify-center border border-white/10 w-9 h-9 shadow-inner transition-colors`}>
+                <User size={18} />
+              </div>
             </div>
           </div>
         </nav>
 
-        <div className="max-w-[2000px] mx-auto relative z-10 w-full flex flex-col lg:flex-row lg:items-center justify-between gap-8 2xl:gap-16">
-            <div className="flex-1">
-              <p className={`text-blue-300 uppercase tracking-[0.4em] font-black flex items-center gap-2 mb-3 transition-all ${isFullScreen ? 'text-xs' : 'text-[10px]'}`}>
-                <Activity className="size-4 animate-pulse" /> MONITORAMENTO LIVE
-              </p>
-              <h2 className={`font-black tracking-tighter leading-[0.8] transition-all drop-shadow-2xl mb-8
-                ${isFullScreen ? 'text-7xl md:text-9xl 2xl:text-[12rem]' : 'text-8xl md:text-[10rem] 2xl:text-[14rem]'}`}>
-                <AnimatedCounter target={total} />
-              </h2>
-
-              {/* NOTIFICAÇÃO GLASSMORPHISM */}
-              <div className={`w-full max-w-lg relative h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden shadow-2xl`}>
-                {highlights.map((item, idx) => (
-                  <div 
-                    key={idx}
-                    className={`absolute inset-0 flex items-center gap-4 px-5 transition-all duration-1000 ease-in-out
-                      ${idx === highlightIndex ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}
-                  >
-                    <div className="bg-blue-600/40 p-2 rounded-lg border border-white/10">
-                      {React.cloneElement(item.icon as React.ReactElement, { className: 'text-white', size: 16 })}
+        {activeTab === 'solicitacoes' && (
+          <div className="max-w-[2000px] mx-auto relative z-10 w-full flex flex-col lg:flex-row lg:items-center justify-between gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex-1">
+                <p className="text-blue-300 uppercase tracking-[0.4em] font-black flex items-center gap-2 mb-3 text-[10px]">
+                  <Activity className="size-4 animate-pulse" /> MONITORAMENTO LIVE
+                </p>
+                <h2 className="font-black tracking-tighter leading-[0.8] transition-all drop-shadow-2xl mb-8 text-8xl md:text-[10rem] 2xl:text-[14rem]">
+                  <AnimatedCounter target={total} />
+                </h2>
+                
+                <div 
+                  onClick={() => setIsHistoryModalOpen(true)}
+                  className={`group cursor-pointer w-full max-w-lg relative h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden shadow-2xl transition-all hover:bg-white/15 hover:scale-[1.01] active:scale-[0.99]`}
+                >
+                  {highlights.map((item, idx) => (
+                    <div 
+                      key={idx}
+                      className={`absolute inset-0 flex items-center gap-4 px-5 transition-all duration-1000 ease-in-out
+                        ${idx === highlightIndex ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}
+                    >
+                      <div className="bg-blue-600/40 p-2 rounded-lg border border-white/10 group-hover:bg-blue-600/60 transition-colors">
+                        {React.isValidElement(item.icon) && React.cloneElement(item.icon as React.ReactElement<any>, { className: 'text-white', size: 16 })}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-blue-200/80">{item.label}</span>
+                        <span className="text-base font-bold text-white truncate block">{item.value}</span>
+                      </div>
+                      <div className="text-white/30 group-hover:text-white/60 transition-colors">
+                         <ChevronRight size={18} />
+                      </div>
                     </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[9px] font-black text-blue-200/80 uppercase tracking-widest">{item.label}</span>
-                      <span className="text-base font-bold text-white truncate">{item.value}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-[2.5rem] border border-white/10 backdrop-blur-xl shadow-2xl w-full lg:w-96 2xl:w-[500px] p-8 transition-all">
+                 <div className="flex items-center gap-3 mb-6">
+                    <TrendingUp className="text-blue-300 size-6 md:size-8" />
+                    <h4 className="font-black text-xl md:text-2xl text-white">Eficiência Geral</h4>
+                 </div>
+                 <div className="space-y-4">
+                    <div className="flex justify-between items-center bg-white/5 rounded-2xl border border-white/5 p-4 md:p-6">
+                       <span className="font-black uppercase tracking-widest text-[10px] md:text-xs text-blue-300">Satisfação Média</span>
+                       <div className="flex items-center gap-2">
+                          <span className="font-black text-2xl md:text-3xl text-white">4.8</span>
+                          <Star className="text-yellow-400 fill-current size-4 md:size-5" />
+                       </div>
+                    </div>
+                    <div className="flex justify-between items-center bg-white/5 rounded-2xl border border-white/5 p-4 md:p-6">
+                       <span className="font-black uppercase tracking-widest text-[10px] md:text-xs text-blue-300">Resolução (24h)</span>
+                       <span className="font-black text-2xl md:text-3xl text-emerald-400">92%</span>
+                    </div>
+                 </div>
+              </div>
+          </div>
+        )}
+      </header>
+
+      {/* CONTEÚDO DINÂMICO - SOLICITAÇÕES */}
+      {activeTab === 'solicitacoes' && (
+        <>
+          <div className="max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 relative z-20 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 -mt-16 md:-mt-24 2xl:-mt-28">
+            <MetricCard label="NOVAS SOLICITAÇÕES" value={total} icon={<FileText />} color="blue" />
+            <MetricCard label="EM ATENDIMENTO" value={Math.floor(total * 0.05)} icon={<Clock />} color="orange" />
+            <MetricCard label="CONCLUÍDAS" value={2450} icon={<CheckCircle />} color="emerald" />
+          </div>
+          <main className="max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 flex flex-col lg:flex-row gap-6 md:gap-8 mt-8 md:mt-12">
+            <section className="lg:w-2/3 bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 p-10 md:p-12">
+              <h3 className="font-black text-gray-900 tracking-tighter text-xl md:text-2xl 2xl:text-4xl mb-10">Serviços e Participação</h3>
+              <div className="space-y-6">
+                {METRICS_DATA.map((metric, idx) => (
+                  <div key={metric.label} className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6 border-b border-gray-50 pb-5 last:border-0 last:pb-0">
+                    <div className="font-bold text-gray-300 shrink-0 w-8 text-sm">{(idx + 1).toString().padStart(2, '0')}</div>
+                    <div className="shrink-0 md:w-48 xl:w-56"><h4 className="font-black text-gray-800 text-base">{metric.label}</h4></div>
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-50 rounded-xl overflow-hidden flex shadow-inner h-8 md:h-10">
+                        {metric.sectors.map((sector, sIdx) => (
+                          <div key={sIdx} className={`${sector.color} h-full transition-all duration-1000 flex items-center justify-center`} style={{ width: `${sector.percentage}%` }}>
+                            <span className="font-black text-white/95 text-[8px] md:text-[9px] px-1">{sector.sigla}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 md:w-24">
+                      <p className="font-black text-gray-400 uppercase tracking-widest text-[9px]"><span className="text-gray-900 block font-black text-sm">{metric.totalSolicitations.toLocaleString('pt-BR')}</span>solicit.</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
+            <section className="lg:w-1/3 bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 p-10 md:p-12">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="bg-blue-50 p-3 rounded-2xl text-blue-600"><Timer size={24} /></div>
+                <div><h3 className="font-black text-gray-900 text-xl">Tempo de Resposta</h3><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SLA POR SERVIÇO</p></div>
+              </div>
+              <div className="space-y-4">
+                {METRICS_DATA.map((metric, idx) => {
+                  const isCritical = metric.days > 3;
+                  return (
+                    <div key={`sla-${idx}`} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100 group hover:bg-white hover:shadow-lg transition-all">
+                      <div className="flex flex-col min-w-0"><span className="text-xs font-black text-gray-800 truncate mb-1">{metric.label}</span><div className="flex items-center gap-1.5"><span className={`font-black text-lg ${isCritical ? 'text-red-600' : 'text-emerald-500'}`}>{metric.days}</span><span className="text-[9px] font-bold text-gray-400 tracking-widest mt-1">DIAS MÉDIO</span></div></div>
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${isCritical ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-500'} border border-current/10 shrink-0`}><span className="text-[10px] font-black tracking-widest uppercase">{isCritical ? 'CRÍTICO' : 'OK'}</span></div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </main>
+        </>
+      )}
 
-            {/* CARD DE EFICIÊNCIA */}
-            <div className={`bg-white/5 rounded-[2.5rem] border border-white/10 backdrop-blur-xl shadow-2xl w-full lg:w-96 2xl:w-[500px] p-8 transition-all`}>
-               <div className="flex items-center gap-3 mb-6">
-                  <TrendingUp className="text-blue-300 size-6 md:size-8" />
-                  <h4 className="font-black text-xl md:text-2xl text-white">Eficiência</h4>
-               </div>
-               <div className="space-y-4">
-                  <div className="flex justify-between items-center bg-white/5 rounded-2xl border border-white/5 p-4 md:p-6">
-                     <span className="font-black text-blue-300 uppercase tracking-widest text-[10px] md:text-xs">Satisfação</span>
-                     <div className="flex items-center gap-2">
-                        <span className="font-black text-2xl md:text-3xl text-white">4.8</span>
-                        <Star className="text-yellow-400 fill-current size-4 md:size-5" />
-                     </div>
-                  </div>
-                  <div className="flex justify-between items-center bg-white/5 rounded-2xl border border-white/5 p-4 md:p-6">
-                     <span className="font-black text-blue-300 uppercase tracking-widest text-[10px] md:text-xs">Resolução</span>
-                     <span className="font-black text-emerald-400 text-2xl md:text-3xl">92%</span>
-                  </div>
-               </div>
-            </div>
-        </div>
-      </header>
-
-      {/* KPI CARDS */}
-      <div className={`max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 relative z-20 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 transition-all
-        ${isFullScreen ? 'mt-6' : '-mt-16 md:-mt-24 2xl:-mt-28'}`}>
-        <MetricCard label="NOVAS SOLICITAÇÕES" value={total} icon={<FileText />} color="blue" isFS={isFullScreen} />
-        <MetricCard label="EM ATENDIMENTO" value={Math.floor(total * 0.05)} icon={<Clock />} color="orange" isFS={isFullScreen} />
-        <MetricCard label="CONCLUÍDAS" value={2450} icon={<CheckCircle />} color="emerald" isFS={isFullScreen} />
-      </div>
-
-      {/* MAIN CONTENT AREA */}
-      <main className={`max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 flex flex-col lg:flex-row gap-6 md:gap-8 relative z-20 transition-all ${isFullScreen ? 'mt-8 flex-1 overflow-hidden mb-4' : 'mt-8 md:mt-12'}`}>
-        
-        {/* SERVIÇOS OFERECIDOS (Ocupa ~65% da largura) */}
-        <section className={`lg:w-2/3 bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden transition-all
-          ${isFullScreen ? 'h-full p-8' : 'p-10 md:p-12'}`}>
+      {/* PÁGINA BAIXA EFICIÊNCIA - REFORMULADA */}
+      {activeTab === 'eficiencia' && (
+        <main className="max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 mt-8 flex-1 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
           
-          <div className={`flex justify-between items-center gap-4 ${isFullScreen ? 'mb-8' : 'mb-10'}`}>
-            <div className="flex items-center gap-4">
-               <div className={`bg-blue-600 rounded-full hidden md:block w-1.5 h-8`}></div>
-               <h3 className={`font-black text-gray-900 tracking-tighter transition-all ${isFullScreen ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl 2xl:text-4xl'}`}>Serviços e Participação</h3>
-            </div>
-            <div className="hidden xl:flex gap-4 font-black text-gray-400 uppercase tracking-widest bg-gray-50 rounded-xl border border-gray-100 p-3 text-[9px]">
-              <div className="flex items-center gap-2"><div className="bg-blue-600 rounded-sm w-2.5 h-2.5" /> PRINCIPAL</div>
-              <div className="flex items-center gap-2"><div className="bg-indigo-500 rounded-sm w-2.5 h-2.5" /> APOIO</div>
-              <div className="flex items-center gap-2"><div className="bg-indigo-300 rounded-sm w-2.5 h-2.5" /> ADM</div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+             <EfficiencyCard label="GARGALOS CRÍTICOS" value={4} icon={<AlertCircle />} color="red" sub="SERVIÇOS TRAVADOS" />
+             <EfficiencyCard label="SLA OVERFLOW" value={850} icon={<Clock />} color="orange" sub="DEMANDAS ATRASADAS" />
+             <EfficiencyCard label="SOBRECARGA SETOR" value={0} formatter={() => "SEURB"} icon={<BarChart3 />} color="rose" sub="DEPARTAMENTO CRÍTICO" />
+             <EfficiencyCard label="QUEDA EFICIÊNCIA" value={18} formatter={(v) => `-${v}%`} icon={<TrendingDown />} color="amber" sub="COMPARADO AO MÊS ANTERIOR" />
           </div>
 
-          <div className={`transition-all pr-4 pl-1 custom-scrollbar overflow-y-auto flex-1 ${isFullScreen ? 'space-y-4' : 'space-y-6'}`}>
-            {METRICS_DATA.map((metric, idx) => (
-              <div key={metric.label} className="group flex flex-col md:flex-row md:items-center gap-2 md:gap-6 border-b border-gray-50 pb-5 last:border-0 last:pb-0">
-                <div className="font-bold text-gray-300 shrink-0 w-8 text-sm md:text-base">
-                  {(idx + 1).toString().padStart(2, '0')}
-                </div>
-                <div className="shrink-0 md:w-40 lg:w-48 xl:w-56">
-                  <h4 className={`font-black text-gray-800 group-hover:text-blue-600 transition-all ${isFullScreen ? 'text-lg' : 'text-base'}`}>
-                    {metric.label}
-                  </h4>
-                </div>
-                <div className="flex-1">
-                   <div className={`w-full bg-gray-50 rounded-xl overflow-hidden flex shadow-inner h-8 md:h-10 transition-all`}>
-                    {metric.sectors.map((sector, sIdx) => (
-                      <div 
-                        key={sIdx}
-                        className={`${sector.color} h-full transition-all duration-1000 flex items-center justify-center relative border-r border-white/10 last:border-0`} 
-                        style={{ width: `${sector.percentage}%` }}
-                      >
-                        <span className={`font-black text-white/95 text-[8px] md:text-[9px] drop-shadow-sm whitespace-nowrap px-1`}>
-                          {sector.sigla} {sector.percentage}%
-                        </span>
+          {/* CARD DE AÇÃO / RECOMENDAÇÃO DINÂMICA (ESTILO DASHBOARD HIGHLIGHTS) */}
+          <section className="bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden p-10 md:p-12">
+             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[120px] pointer-events-none" />
+             
+             <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+                <div className="flex-1 max-w-2xl">
+                   <div className="flex items-center gap-3 mb-6">
+                      <div className="bg-red-600 p-2.5 rounded-xl shadow-lg shadow-red-900/40">
+                         <Target className="text-white" size={24} />
                       </div>
-                    ))}
-                  </div>
+                      <span className="text-red-400 font-black text-xs uppercase tracking-[0.3em]">IA: Recomendação Estratégica</span>
+                   </div>
+
+                   <div className="relative h-40 md:h-28 overflow-hidden">
+                      {RECOMMENDATIONS.map((rec, idx) => (
+                        <div 
+                          key={rec.id}
+                          className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === recommendationIndex ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
+                        >
+                           <h3 className="text-white text-3xl font-black tracking-tighter mb-4">{rec.title}</h3>
+                           <p className="text-slate-400 text-lg font-medium leading-relaxed">{rec.description}</p>
+                        </div>
+                      ))}
+                   </div>
                 </div>
-                <div className="text-right shrink-0 md:w-24">
-                  <p className="font-black text-gray-400 uppercase tracking-widest text-[8px] md:text-[9px]">
-                    <span className={`text-gray-900 block font-black mb-0.5 ${isFullScreen ? 'text-base' : 'text-sm'}`}>{metric.totalSolicitations.toLocaleString('pt-BR')}</span>
-                    solicit.
-                  </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 shrink-0">
+                   <button className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-xl shadow-red-900/40 transition-all active:scale-95 flex items-center justify-center gap-3 text-xs tracking-widest uppercase">
+                      <ShieldAlert size={18} /> ENVIAR ALERTA AO SETOR
+                   </button>
+                   <button 
+                    onClick={() => setIsActionHistoryOpen(true)}
+                    className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-3 text-xs tracking-widest uppercase"
+                   >
+                      <History size={18} /> ABRIR HISTÓRICO
+                   </button>
+                </div>
+             </div>
+          </section>
+
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* RANKING DE SERVIÇOS CRÍTICOS (DA PIOR PARA MELHOR) */}
+            <div className="flex-1 bg-white rounded-[2.5rem] shadow-xl border border-red-50 overflow-hidden flex flex-col">
+              <div className="p-10 border-b border-gray-50 flex justify-between items-center">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-800 flex items-center gap-3">
+                    <ZapOff className="text-red-500" /> Ranking de Criticidade: Serviços
+                  </h3>
+                  <p className="text-slate-400 text-sm font-medium mt-1 uppercase tracking-widest">Ordenado do pior para o melhor desempenho</p>
+                </div>
+                <div className="bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100">
+                   {CRITICAL_ANALYSIS.filter(a => a.status === 'critical').length} alertas críticos
                 </div>
               </div>
-            ))}
-          </div>
-        </section>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Serviço</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resolução</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">SLA Atual</th>
+                      <th className="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Gargalo</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {CRITICAL_ANALYSIS.map((item, i) => (
+                      <tr 
+                        key={item.id} 
+                        className="hover:bg-red-50/30 transition-colors cursor-pointer group"
+                        onClick={() => setSelectedServiceForModal(item)}
+                      >
+                        <td className="px-10 py-6">
+                           <span className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${i === 0 ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                             {i + 1}
+                           </span>
+                        </td>
+                        <td className="px-6 py-6">
+                           <div className="flex flex-col">
+                             <span className="font-black text-slate-800 group-hover:text-red-600 transition-colors">{item.label}</span>
+                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full w-fit mt-1 ${item.status === 'critical' ? 'bg-red-50 text-red-600' : (item.status === 'attention' ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600')}`}>
+                               {item.status.toUpperCase()}
+                             </span>
+                           </div>
+                        </td>
+                        <td className="px-6 py-6">
+                          <div className="flex items-center gap-3">
+                             <span className="font-black text-slate-800">{item.resolution}%</span>
+                             <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                               <div className={`h-full ${item.resolution < 40 ? 'bg-red-500' : (item.resolution < 70 ? 'bg-amber-500' : 'bg-emerald-500')}`} style={{ width: `${item.resolution}%` }} />
+                             </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-6">
+                           <div className="flex flex-col">
+                             <span className={`font-black ${item.sla > 5 ? 'text-red-600' : 'text-slate-800'}`}>{item.sla} dias</span>
+                             <span className="text-[9px] font-bold text-slate-400 uppercase">META: 3.0d</span>
+                           </div>
+                        </td>
+                        <td className="px-10 py-6 text-right">
+                           <ChevronRight size={18} className="text-slate-300 group-hover:text-red-600 transition-all translate-x-0 group-hover:translate-x-1" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-        {/* TEMPO DE RESPOSTA (SLA) (Ocupa ~35% da largura) */}
-        <section className={`lg:w-1/3 bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col overflow-hidden transition-all
-          ${isFullScreen ? 'h-full p-8' : 'p-10 md:p-12'}`}>
-          
-          <div className="flex items-center gap-4 mb-8">
-             <div className="bg-blue-50 p-3 rounded-2xl text-blue-600">
-                <Timer size={24} />
-             </div>
-             <div>
-                <h3 className={`font-black text-gray-900 tracking-tighter ${isFullScreen ? 'text-2xl' : 'text-xl'}`}>Tempo de Resposta</h3>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SLA POR SERVIÇO</p>
-             </div>
-          </div>
+            {/* RANKING DE GARGALOS POR SETOR */}
+            <div className="lg:w-[450px] flex flex-col gap-6">
+               <div className="bg-white rounded-[2.5rem] p-10 shadow-xl border border-red-50">
+                  <div className="mb-8">
+                    <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
+                       <AlertTriangle className="text-amber-500" /> Gargalos por Setor
+                    </h3>
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Classificação por impacto operacional</p>
+                  </div>
 
-          <div className={`transition-all pr-4 pl-1 custom-scrollbar overflow-y-auto flex-1 space-y-4`}>
-            {METRICS_DATA.map((metric, idx) => {
-              const sla = getSLAStatus(metric.days);
-              return (
-                <div key={`sla-${idx}`} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100 group hover:bg-white hover:shadow-lg transition-all">
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-black text-gray-800 truncate mb-1">{metric.label}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`font-black text-lg ${sla.color}`}>{metric.days}</span>
-                      <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">DIAS MÉDIO</span>
+                  <div className="space-y-4">
+                     {SECTOR_BOTTLENECKS.map((s, i) => (
+                       <div 
+                        key={s.id} 
+                        className="flex flex-col gap-3 p-5 bg-slate-50/50 rounded-2xl border border-slate-100 group hover:border-red-200 hover:bg-white hover:shadow-xl transition-all cursor-pointer"
+                        onClick={() => setSelectedSectorForModal(s)}
+                       >
+                          <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-3">
+                                <span className={`w-6 h-6 rounded flex items-center justify-center font-black text-[10px] ${i === 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                                  {i + 1}
+                                </span>
+                                <span className="font-black text-slate-900 text-lg group-hover:text-red-600 transition-colors">{s.name}</span>
+                             </div>
+                             <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase ${s.impact === 'alto' ? 'bg-red-600 text-white' : (s.impact === 'médio' ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white')}`}>
+                               Impacto {s.impact}
+                             </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 mt-2">
+                             <div>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Resolução</p>
+                                <p className="font-black text-slate-800">{s.resolutionRate}%</p>
+                             </div>
+                             <div>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Resposta (SLA)</p>
+                                <p className="font-black text-slate-800">{s.avgResponse}d</p>
+                             </div>
+                          </div>
+
+                          <div className="mt-2 w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                             <div className={`h-full transition-all duration-1000 ${s.impact === 'alto' ? 'bg-red-600' : 'bg-amber-500'}`} style={{ width: `${(s.pending / 1500) * 100}%` }} />
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* MODAL DE DETALHES DO SERVIÇO */}
+      {selectedServiceForModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedServiceForModal(null)} />
+           <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-in zoom-in-95 duration-500">
+              <div className={`p-10 text-white ${selectedServiceForModal.status === 'critical' ? 'bg-red-600' : 'bg-slate-900'}`}>
+                 <div className="flex justify-between items-start">
+                    <div>
+                       <span className="text-white/70 font-black text-[10px] uppercase tracking-widest mb-2 block">ANÁLISE DE SERVIÇO</span>
+                       <h3 className="text-4xl font-black tracking-tighter">{selectedServiceForModal.label}</h3>
                     </div>
-                  </div>
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${sla.bg} ${sla.color} border border-current/10 shrink-0`}>
-                    {sla.icon}
-                    <span className="text-[10px] font-black tracking-widest">{sla.label}</span>
-                  </div>
+                    <button onClick={() => setSelectedServiceForModal(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><X size={24} /></button>
+                 </div>
+              </div>
+              <div className="p-10 space-y-10">
+                 <div className="grid grid-cols-2 gap-8">
+                    <DetailBox label="Solicitações" value={selectedServiceForModal.solicitations} sub="TOTAL ACUMULADO" />
+                    <DetailBox label="SLA Médio" value={`${selectedServiceForModal.sla} dias`} sub="META: 3.0 DIAS" highlight={selectedServiceForModal.sla > 3} />
+                 </div>
+
+                 <div className="space-y-4">
+                    <h4 className="text-slate-400 font-black text-xs uppercase tracking-widest">Setores Envolvidos e Travamentos</h4>
+                    <div className="space-y-3">
+                       {selectedServiceForModal.sectorsInvolved.map((sector, idx) => (
+                         <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div className="flex items-center gap-4">
+                               <div className={`w-3 h-3 rounded-full ${sector === selectedServiceForModal.bottleneck ? 'bg-red-600 animate-pulse' : 'bg-blue-400'}`} />
+                               <span className="font-black text-slate-800">{sector}</span>
+                            </div>
+                            {sector === selectedServiceForModal.bottleneck && (
+                               <span className="text-[10px] font-black text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-100">PONTO DE TRAVAMENTO</span>
+                            )}
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+              </div>
+              <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+                 <button className="flex-1 py-4 bg-red-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-xl shadow-red-900/20 active:scale-95 transition-all">DISPARAR FORÇA TAREFA</button>
+                 <button onClick={() => setSelectedServiceForModal(null)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-600 font-black rounded-2xl text-xs uppercase tracking-widest active:scale-95 transition-all">VOLTAR</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL DE DETALHES DO SETOR */}
+      {selectedSectorForModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedSectorForModal(null)} />
+           <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-in zoom-in-95 duration-500">
+              <div className="p-10 text-white bg-slate-900">
+                 <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                       <div className="bg-white/10 p-3 rounded-2xl"><Users size={32} /></div>
+                       <div>
+                          <span className="text-white/70 font-black text-[10px] uppercase tracking-widest block">DETALHES DO SETOR</span>
+                          <h3 className="text-4xl font-black tracking-tighter">{selectedSectorForModal.name}</h3>
+                       </div>
+                    </div>
+                    <button onClick={() => setSelectedSectorForModal(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><X size={24} /></button>
+                 </div>
+              </div>
+              <div className="p-10 space-y-10 h-[60vh] overflow-y-auto custom-scrollbar">
+                 <div className="grid grid-cols-3 gap-6">
+                    <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 text-center">
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">USUÁRIOS</p>
+                       <p className="text-3xl font-black text-slate-800">{selectedSectorForModal.users}</p>
+                    </div>
+                    <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 text-center">
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">RESOLUÇÃO</p>
+                       <p className="text-3xl font-black text-emerald-600">{selectedSectorForModal.resolutionRate}%</p>
+                    </div>
+                    <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 text-center">
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">PENDÊNCIAS</p>
+                       <p className="text-3xl font-black text-red-600">{selectedSectorForModal.pending}</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <h4 className="text-slate-400 font-black text-xs uppercase tracking-widest">Serviços sob Responsabilidade</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {selectedSectorForModal.services.map((service, idx) => (
+                         <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                            <span className="font-black text-slate-700">{service}</span>
+                            <ArrowUpRight size={16} className="text-slate-300" />
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="p-8 bg-amber-50 rounded-[2rem] border border-amber-100">
+                    <h5 className="font-black text-amber-800 text-lg mb-2">Diagnóstico de Capacidade</h5>
+                    <p className="text-amber-700/80 font-medium">O setor opera com {selectedSectorForModal.capacity}% de sua capacidade teórica. O alto volume de pendências ({selectedSectorForModal.pending}) sugere necessidade de reforço imediato.</p>
+                 </div>
+              </div>
+              <div className="p-8 bg-slate-50 border-t border-slate-100 flex gap-4">
+                 <button className="flex-1 py-4 bg-slate-900 text-white font-black rounded-2xl text-xs uppercase tracking-widest active:scale-95 transition-all">RELATÓRIO SETORIAL</button>
+                 <button onClick={() => setSelectedSectorForModal(null)} className="flex-1 py-4 bg-white border border-slate-200 text-slate-600 font-black rounded-2xl text-xs uppercase tracking-widest active:scale-95 transition-all">FECHAR</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL DE HISTÓRICO DE AÇÕES/RECOMENDAÇÕES */}
+      {isActionHistoryOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setIsActionHistoryOpen(false)} />
+           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 duration-500">
+              <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+                 <h3 className="text-xl font-black tracking-tighter">Histórico de Recomendações</h3>
+                 <button onClick={() => setIsActionHistoryOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20} /></button>
+              </div>
+              <div className="p-6 space-y-4">
+                 {RECOMMENDATION_HISTORY.map((h) => (
+                   <div key={h.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div className="flex justify-between items-start mb-2">
+                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{h.date}</span>
+                         <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-widest">EXECUTADO</span>
+                      </div>
+                      <h4 className="font-black text-slate-800 mb-1">{h.action}</h4>
+                      <p className="text-xs text-slate-500 font-medium">{h.result}</p>
+                   </div>
+                 ))}
+              </div>
+              <div className="p-6 bg-slate-50 border-t border-slate-100">
+                 <button onClick={() => setIsActionHistoryOpen(false)} className="w-full py-3 bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest rounded-xl">FECHAR HISTÓRICO</button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL DE HISTÓRICO DE NOTIFICAÇÕES (BARRA SUPERIOR) */}
+      {isHistoryModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsHistoryModalOpen(false)} />
+          <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] relative z-10 overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+             <div className="bg-blue-600 text-white p-8 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                   <div className="bg-white/20 p-2 rounded-xl"><History size={24} /></div>
+                   <div>
+                      <h3 className="text-xl font-black tracking-tighter">Histórico de Alertas</h3>
+                      <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Últimas atualizações da rede</p>
+                   </div>
                 </div>
-              );
-            })}
+                <button onClick={() => setIsHistoryModalOpen(false)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><X size={20} /></button>
+             </div>
+             <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                {NOTIFICATION_HISTORY.map((item) => (
+                  <div key={item.id} className="flex items-start gap-4 p-4 rounded-[1.5rem] bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-lg transition-all group">
+                     <div className={`mt-1 p-2.5 rounded-xl shrink-0 ${
+                        item.status === 'done' ? 'bg-emerald-50 text-emerald-600' : 
+                        item.status === 'processing' ? 'bg-blue-50 text-blue-600' : 
+                        'bg-red-50 text-red-600'
+                     }`}>
+                        {item.status === 'done' ? <CheckCircle size={18} /> : 
+                         item.status === 'processing' ? <Activity size={18} /> : 
+                         <AlertCircle size={18} />}
+                     </div>
+                     <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-1">
+                           <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{item.department}</span>
+                           <span className="text-[10px] font-bold text-slate-400 bg-slate-200/50 px-2 py-0.5 rounded-full">{item.time}</span>
+                        </div>
+                        <h4 className="text-base font-black text-slate-800 leading-tight group-hover:text-blue-600 transition-colors">{item.title}</h4>
+                     </div>
+                  </div>
+                ))}
+             </div>
+             <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-center">
+                <button onClick={() => setIsHistoryModalOpen(false)} className="px-8 py-3 bg-slate-900 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-800 transition-all active:scale-95 shadow-xl shadow-slate-900/20">FECHAR HISTÓRICO</button>
+             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      )}
+
+      {/* PÁGINA DO MAPA DA CIDADE */}
+      {activeTab === 'mapa' && (
+        <main className="max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 mt-8 flex-1 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden flex flex-col lg:flex-row relative min-h-[600px] md:min-h-[700px]">
+            <div className="absolute top-8 left-8 z-30 flex flex-col gap-4">
+              <div className="bg-white/90 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-gray-100 flex items-center">
+                 <div className="text-[10px] font-black text-slate-400 px-3 uppercase tracking-widest">Visualização:</div>
+                 <button onClick={() => setMapMode('solicitacoes')} className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${mapMode === 'solicitacoes' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-500 hover:bg-gray-50'}`}>Solicitações</button>
+                 <button onClick={() => setMapMode('calor')} className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${mapMode === 'calor' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-slate-500 hover:bg-gray-50'}`}>Calor</button>
+              </div>
+              <button onClick={() => setIsAutoPlaying(!isAutoPlaying)} className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-bold text-sm shadow-xl transition-all border ${isAutoPlaying ? 'bg-red-50 text-red-600 border-red-100' : 'bg-white text-slate-700 border-gray-100'}`}>{isAutoPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" />}{isAutoPlaying ? 'PAUSAR ANIMAÇÃO' : 'ANIMAR TEMPO'}</button>
+            </div>
+            <div className="flex-1 bg-slate-50 relative flex items-center justify-center p-12 overflow-hidden">
+              <svg viewBox="0 0 800 600" className="w-full h-full max-h-[550px] transition-transform duration-1000 ease-out" style={{ transform: selectedNeighborhood ? 'scale(1.05) translateY(-20px)' : 'scale(1)' }}>
+                <defs><filter id="mapShadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="5" /><feOffset dx="0" dy="5" result="offsetblur" /><feComponentTransfer><feFuncA type="linear" slope="0.3" /></feComponentTransfer><feMerge><feMergeNode /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
+                {NEIGHBORHOODS.map((nb) => (
+                  <path key={nb.id} d={nb.path} fill={getMapColor(nb.solicitations)} stroke="white" strokeWidth={selectedNeighborhood?.id === nb.id ? "4" : "1.5"} className="transition-all duration-700 cursor-pointer hover:brightness-110" style={{ filter: selectedNeighborhood?.id === nb.id ? 'url(#mapShadow)' : 'none', transform: selectedNeighborhood?.id === nb.id ? 'translate(-5px, -5px)' : 'none' }} onClick={() => { setSelectedNeighborhood(nb); setIsAutoPlaying(false); }} />
+                ))}
+              </svg>
+            </div>
+            <div className={`w-full lg:w-[400px] bg-white border-l border-gray-100 p-10 transition-all duration-500 flex flex-col overflow-y-auto ${selectedNeighborhood ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+              {selectedNeighborhood && (
+                <div className="animate-in slide-in-from-right-8 duration-500">
+                  <div className="flex justify-between items-start mb-10">
+                     <div><span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] mb-1 block">DETALHES DO BAIRRO</span><h3 className="text-4xl font-black tracking-tighter text-slate-900">{selectedNeighborhood.name}</h3></div>
+                     <button onClick={() => setSelectedNeighborhood(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-slate-300"><X size={24} /></button>
+                  </div>
+                  <div className="space-y-6">
+                     <DetailRow label="Solicitações" value={selectedNeighborhood.solicitations} />
+                     <DetailRow label="Agendamentos" value={selectedNeighborhood.appointments} />
+                  </div>
+                  <button className="w-full mt-10 py-4 bg-blue-600 text-white font-black rounded-2xl shadow-2xl shadow-blue-200 hover:scale-[1.02] active:scale-95 transition-all text-xs tracking-widest uppercase">ABRIR RELATÓRIO DA ZONA</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      )}
     </div>
   );
 };
 
-const MetricCard: React.FC<{ label: string; value: number; icon: React.ReactNode; color: string; isFS?: boolean }> = ({ label, value, icon, color, isFS }) => {
+const DetailBox: React.FC<{ label: string; value: string | number; sub: string; highlight?: boolean }> = ({ label, value, sub, highlight }) => (
+  <div className={`p-8 rounded-[2.5rem] border ${highlight ? 'bg-red-50 border-red-100' : 'bg-slate-50 border-slate-100'}`}>
+     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+     <p className={`text-4xl font-black ${highlight ? 'text-red-600' : 'text-slate-800'}`}>{value}</p>
+     <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-2">{sub}</p>
+  </div>
+);
+
+const EfficiencyCard: React.FC<{ label: string; value: number | string; icon: React.ReactNode; color: string; sub: string; formatter?: (v: any) => string }> = ({ label, value, icon, color, sub, formatter }) => {
+  const actualFormatter = formatter || ((v: any) => v.toLocaleString('pt-BR'));
+  const colorClasses: Record<string, string> = {
+    red: 'text-red-600 bg-red-50',
+    orange: 'text-orange-600 bg-orange-50',
+    rose: 'text-rose-600 bg-rose-50',
+    amber: 'text-amber-600 bg-amber-50',
+  };
   return (
-    <div className={`bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-gray-100 hover:translate-y-[-3px] transition-all group relative overflow-hidden
-      ${isFS ? 'p-6' : 'p-6 md:p-8 2xl:p-12'}`}>
+    <div className="bg-white rounded-[2rem] shadow-xl p-8 border border-slate-100 hover:scale-[1.02] transition-all">
+       <div className="flex justify-between items-start mb-6">
+          <div className={`p-3 rounded-2xl ${colorClasses[color]}`}>{React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<any>, { size: 24 })}</div>
+          <div className="text-right">
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
+             <p className={`text-4xl font-black ${color === 'red' ? 'text-red-600' : 'text-slate-900'}`}>
+                {typeof value === 'number' ? actualFormatter(value) : value}
+             </p>
+          </div>
+       </div>
+       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{sub}</p>
+    </div>
+  );
+};
+
+const DetailRow: React.FC<{ label: string; value: number }> = ({ label, value }) => (
+  <div className="flex justify-between items-end pb-4 border-b border-gray-100">
+    <span className="text-sm font-bold text-slate-500">{label}</span>
+    <span className="text-2xl font-black text-slate-900">{value.toLocaleString('pt-BR')}</span>
+  </div>
+);
+
+const MetricCard: React.FC<{ label: string; value: number; formatter?: (v: number) => string; icon: React.ReactNode; color: string; isFS?: boolean }> = ({ label, value, formatter, icon, color, isFS }) => {
+  const defaultFormatter = (val: number) => val.toLocaleString('pt-BR');
+  const actualFormatter = formatter || defaultFormatter;
+  const colorClasses: Record<string, string> = {
+    blue: 'text-blue-500 bg-blue-50',
+    orange: 'text-orange-500 bg-orange-50',
+    emerald: 'text-emerald-500 bg-emerald-50',
+  };
+  return (
+    <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-xl border border-gray-100 p-6 md:p-8 2xl:p-12 hover:translate-y-[-3px] transition-all group relative overflow-hidden">
       <div className="flex justify-between items-start relative z-10 mb-4">
-        <p className={`text-blue-600 font-black tracking-widest uppercase text-[9px] md:text-xs`}>{label}</p>
-        <div className={`bg-gray-50 rounded-xl group-hover:bg-${color}-50 transition-colors p-2.5 md:p-3`}>
-          {React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<any>, { className: `text-${color}-500 size-5 md:size-6` })}
+        <p className="text-blue-600 font-black tracking-widest uppercase text-[9px] md:text-xs">{label}</p>
+        <div className={`rounded-xl transition-colors p-2.5 md:p-3 ${colorClasses[color] || 'bg-gray-50'}`}>
+          {React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<any>, { className: `size-5 md:size-6` })}
         </div>
       </div>
-      <p className={`font-black tracking-tighter text-gray-900 leading-none transition-all
-        ${isFS ? 'text-4xl 2xl:text-5xl' : 'text-4xl md:text-6xl 2xl:text-[5rem]'}`}>
-        <AnimatedCounter target={value} />
+      <p className="font-black tracking-tighter text-gray-900 leading-none text-4xl md:text-6xl 2xl:text-[5rem] relative z-10">
+        <AnimatedCounter target={value} formatter={actualFormatter} />
       </p>
     </div>
   );
