@@ -5,12 +5,21 @@ export interface SectorParticipation {
   color: string;
 }
 
+export interface StatusCounts {
+  started: number;
+  answered: number;
+  pending: number;
+  completed: number;
+}
+
 export interface ServiceMetric {
   label: string;
   days: number;
   totalPercentage: number;
   totalSolicitations: number;
   sectors: SectorParticipation[];
+  responsible?: string;
+  statusCounts?: StatusCounts;
 }
 
 export interface DeptEfficiency {
