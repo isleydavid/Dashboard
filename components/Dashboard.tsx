@@ -416,7 +416,7 @@ const Dashboard: React.FC = () => {
                   className={`flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] transition-all duration-500 text-[11px] uppercase tracking-widest font-black whitespace-nowrap
                     ${activeTab === 'solicitacoes' ? 'bg-white text-slate-900 shadow-2xl scale-105' : 'text-white/40 hover:text-white'}`}
                 >
-                  <FileText size={16} /> Solicitações
+                  <FileText size={16} /> Performance
                 </button>
                 <button
                   onClick={() => setActiveTab('eficiencia')}
@@ -586,7 +586,7 @@ const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* --- ABA SOLICITAÇÕES --- */}
+        {/* --- ABA SOLICITAÇÕES (PERFORMANCE) --- */}
         {activeTab === 'solicitacoes' && (
           <div className="animate-fade-in-up space-y-6">
             
