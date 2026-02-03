@@ -19,6 +19,7 @@ export interface ServiceMetric {
   totalSolicitations: number;
   sectors: SectorParticipation[];
   responsible?: string;
+  responsibleRole?: string;
   statusCounts?: StatusCounts;
 }
 

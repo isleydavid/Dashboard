@@ -9,28 +9,29 @@ interface AnimatedCounterProps {
 
 const AnimatedCounter: React.FC<AnimatedCounterProps> = ({ 
   target, 
-  duration = 2000,
-  formatter = (val) => val.toLocaleString('pt-BR')
+  duration = 2000, 
+  formatter = (val) => val.toLocaleString('pt-BR') 
 }) => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     let startTime: number | null = null;
-    const startValue = count;
+    const startCount = count;
 
-    const step = (timestamp: number) => {
+    const animate = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
-      const currentCount = Math.floor(progress * (target - startValue) + startValue);
+      const currentCount = Math.floor(progress * (target - startCount) + startCount);
+      
       setCount(currentCount);
 
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        requestAnimationFrame(animate);
       }
     };
 
-    window.requestAnimationFrame(step);
-  }, [target, duration]);
+    requestAnimationFrame(animate);
+  }, [target]);
 
   return <span>{formatter(count)}</span>;
 };

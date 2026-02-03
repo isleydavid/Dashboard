@@ -5,45 +5,61 @@ import {
   CheckCircle, 
   Clock, 
   FileText,
-  TrendingUp,
   LayoutGrid,
   Zap,
   Star,
-  ArrowUpRight,
-  User,
   Activity,
-  Maximize2,
-  Minimize2,
-  Timer,
-  AlertTriangle,
-  XCircle,
-  Map,
-  ZapOff,
+  User,
   ChevronRight,
-  Menu,
+  Timer,
+  BrainCircuit,
   X,
-  Search,
-  Settings,
-  ArrowDownRight,
-  BarChart3,
-  Play,
-  Pause,
-  ArrowUp,
-  ArrowDown,
-  AlertCircle,
-  TrendingDown,
-  Info,
-  History,
-  Users,
-  ShieldAlert,
-  Target,
-  MessageCircle,
-  Briefcase,
+  TrendingUp,
+  AlertTriangle,
   Layers,
-  ChevronUp
+  ShieldAlert,
+  ZapOff,
+  BarChart3,
+  TrendingDown,
+  Target,
+  AlertCircle,
+  Maximize2,
+  Users,
+  Trophy,
+  MessageSquare,
+  ThumbsUp,
+  Award
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 import { ServiceMetric, NotificationItem } from '../types';
+
+interface InvolvedSector {
+  name: string;
+  sla: number;
+  status: 'delayed' | 'on-time' | 'critical';
+}
+
+interface CriticalItem {
+  id: string;
+  label: string;
+  resolution: number;
+  sla: number;
+  pendencyGrowth: number;
+  status: 'critical' | 'attention' | 'ok';
+  bottleneckReason: string;
+  secretary: string;
+  department: string;
+  involvedSectors: InvolvedSector[];
+}
+
+interface SectorRanking {
+  id: string;
+  name: string;
+  impact: 'Crítico' | 'Alto' | 'Médio';
+  pending: number;
+  efficiency: number;
+  secretary: string;
+}
 
 interface Highlight {
   icon: React.ReactNode;
@@ -51,15 +67,20 @@ interface Highlight {
   value: string;
 }
 
-const NEIGHBORHOODS = [
-  { id: 'mangabeira', name: 'Mangabeira', path: 'M 450 150 L 520 180 L 550 280 L 500 350 L 420 320 L 400 220 Z', solicitations: 50420, appointments: 31200, registrations: 20150, docs: 20000 },
-  { id: 'valentina', name: 'Valentina', path: 'M 400 320 L 500 350 L 480 450 L 380 420 L 350 350 Z', solicitations: 25100, appointments: 15400, registrations: 10200, docs: 5000 },
-  { id: 'geisel', name: 'Geisel', path: 'M 300 280 L 400 320 L 350 350 L 280 340 L 250 300 Z', solicitations: 12450, appointments: 8120, registrations: 4300, docs: 2000 },
-  { id: 'centro', name: 'Centro', path: 'M 200 150 L 280 140 L 300 220 L 250 250 L 180 200 Z', solicitations: 8900, appointments: 5200, registrations: 3100, docs: 1000 },
-  { id: 'torre', name: 'Torre', path: 'M 280 140 L 350 120 L 400 180 L 300 220 Z', solicitations: 18230, appointments: 12100, registrations: 6450, docs: 4000 },
-  { id: 'bessa', name: 'Bessa', path: 'M 350 50 L 420 60 L 450 150 L 350 120 Z', solicitations: 35600, appointments: 22400, registrations: 13120, docs: 8000 },
-  { id: 'manaira', name: 'Manaíra', path: 'M 420 60 L 480 80 L 520 180 L 450 150 Z', solicitations: 42150, appointments: 28300, registrations: 14050, docs: 10000 },
-  { id: 'cabo-branco', name: 'Cabo Branco', path: 'M 480 80 L 550 100 L 580 200 L 520 180 Z', solicitations: 15600, appointments: 10120, registrations: 5300, docs: 2000 },
+interface EvaluationRecord {
+  id: string;
+  service: string;
+  citizen: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+const EVALUATION_RECORDS: EvaluationRecord[] = [
+  { id: '1', service: 'Iluminação Pública', citizen: 'Ana Maria', rating: 5, comment: 'Atendimento muito rápido, a rua ficou ótima.', date: 'Há 10 min' },
+  { id: '2', service: 'Limpeza Urbana', citizen: 'Paulo Souza', rating: 4, comment: 'O serviço foi bem feito, mas demorou um pouco para chegar.', date: 'Há 1h' },
+  { id: '3', service: 'Manutenção Viária', citizen: 'Juliana Lima', rating: 5, comment: 'Buracos tapados com perfeição na avenida principal.', date: 'Há 3h' },
+  { id: '4', service: 'Poda de Árvores', citizen: 'Carlos Rocha', rating: 3, comment: 'A poda foi feita, mas deixaram alguns galhos na calçada.', date: 'Há 5h' },
 ];
 
 const METRICS_DATA: ServiceMetric[] = [
@@ -69,6 +90,7 @@ const METRICS_DATA: ServiceMetric[] = [
     totalPercentage: 75, 
     totalSolicitations: 12540,
     responsible: 'Carlos Silva (EMLUR)',
+    responsibleRole: 'GESTOR DO SERVIÇO',
     statusCounts: { started: 1540, answered: 8200, pending: 2150, completed: 650 },
     sectors: [
       { sigla: 'EM', percentage: 45, color: 'bg-blue-600' },
@@ -81,8 +103,9 @@ const METRICS_DATA: ServiceMetric[] = [
     days: 0.8, 
     totalPercentage: 60, 
     totalSolicitations: 8920,
-    responsible: 'Ana Porto (SEURB)',
-    statusCounts: { started: 920, answered: 6500, pending: 1100, completed: 400 },
+    responsible: 'Ana Clara Melo',
+    responsibleRole: 'COORDENADORA SEURB',
+    statusCounts: { started: 890, answered: 5400, pending: 1200, completed: 1430 },
     sectors: [
       { sigla: 'SEURB', percentage: 50, color: 'bg-blue-600' },
       { sigla: 'EM', percentage: 30, color: 'bg-indigo-500' },
@@ -94,8 +117,9 @@ const METRICS_DATA: ServiceMetric[] = [
     days: 4.5, 
     totalPercentage: 45, 
     totalSolicitations: 5410,
-    responsible: 'Marcos Santos (EMLUR)',
-    statusCounts: { started: 810, answered: 2400, pending: 1800, completed: 400 },
+    responsible: 'Ricardo Duarte',
+    responsibleRole: 'SUPERVISOR OPERACIONAL',
+    statusCounts: { started: 1200, answered: 2100, pending: 1800, completed: 310 },
     sectors: [
       { sigla: 'EM', percentage: 60, color: 'bg-blue-600' },
       { sigla: 'SEURB', percentage: 40, color: 'bg-indigo-500' }
@@ -106,8 +130,9 @@ const METRICS_DATA: ServiceMetric[] = [
     days: 3.2, 
     totalPercentage: 30, 
     totalSolicitations: 3215,
-    responsible: 'João Mendes (SEURB)',
-    statusCounts: { started: 450, answered: 1200, pending: 1315, completed: 250 },
+    responsible: 'Eng. Roberto Mascarenhas',
+    responsibleRole: 'DIRETOR TÉCNICO',
+    statusCounts: { started: 450, answered: 1100, pending: 1500, completed: 165 },
     sectors: [
       { sigla: 'SEURB', percentage: 70, color: 'bg-blue-600' },
       { sigla: 'SF', percentage: 30, color: 'bg-indigo-500' }
@@ -118,8 +143,9 @@ const METRICS_DATA: ServiceMetric[] = [
     days: 2.8, 
     totalPercentage: 55, 
     totalSolicitations: 10100,
-    responsible: 'Fernanda Lima (SEMOB)',
-    statusCounts: { started: 1200, answered: 6800, pending: 1550, completed: 550 },
+    responsible: 'Alberto Costa',
+    responsibleRole: 'GESTOR SEMOB',
+    statusCounts: { started: 2100, answered: 4500, pending: 2500, completed: 1000 },
     sectors: [
       { sigla: 'SEMOB', percentage: 55, color: 'bg-blue-600' },
       { sigla: 'SEURB', percentage: 25, color: 'bg-indigo-500' },
@@ -128,104 +154,117 @@ const METRICS_DATA: ServiceMetric[] = [
   },
   { 
     label: 'Sinalização', 
-    days: 2.1, 
-    totalPercentage: 40, 
+    days: 1.5, 
+    totalPercentage: 80, 
     totalSolicitations: 4800,
-    responsible: 'Ricardo Lima (SEMOB)',
-    statusCounts: { started: 600, answered: 2900, pending: 950, completed: 350 },
+    responsible: 'Juliana Paiva',
+    responsibleRole: 'COORDENADORA TRÂNSITO',
+    statusCounts: { started: 300, answered: 3500, pending: 200, completed: 800 },
     sectors: [
       { sigla: 'SEMOB', percentage: 80, color: 'bg-blue-600' },
       { sigla: 'SEURB', percentage: 20, color: 'bg-indigo-500' }
     ]
-  },
+  }
+];
+
+const SECTOR_RANKING: SectorRanking[] = [
+  { id: '1', name: 'SEURB', impact: 'Crítico', pending: 850, efficiency: 45, secretary: 'Eng. Roberto Mascarenhas' },
+  { id: '2', name: 'EMLUR', impact: 'Alto', pending: 1100, efficiency: 62, secretary: 'Dra. Márcia Silveira' },
+  { id: '3', name: 'SEMOB', impact: 'Médio', pending: 420, efficiency: 78, secretary: 'Cel. Alberto Costa' },
+  { id: '4', name: 'SF', impact: 'Médio', pending: 150, efficiency: 85, secretary: 'Juliana Paiva' },
+];
+
+const CRITICAL_ANALYSIS: CriticalItem[] = [
   { 
-    label: 'Saúde Animal', 
-    days: 1.5, 
-    totalPercentage: 25, 
-    totalSolicitations: 2150,
-    responsible: 'Dra. Luana Melo (SESAU)',
-    statusCounts: { started: 320, answered: 1400, pending: 310, completed: 120 },
-    sectors: [
-      { sigla: 'SESAU', percentage: 100, color: 'bg-blue-600' }
+    id: '1', 
+    label: 'Drenagem Pluvial', 
+    resolution: 28, 
+    sla: 8.5, 
+    pendencyGrowth: 15, 
+    status: 'critical', 
+    bottleneckReason: 'Capacidade de escoamento reduzida por obstruções sistemáticas e falta de dragagem mecanizada.',
+    secretary: 'Eng. Roberto Mascarenhas',
+    department: 'Secretaria de Infraestrutura (SEURB)',
+    involvedSectors: [
+      { name: 'Engenharia Hidráulica', sla: 3, status: 'critical' },
+      { name: 'Manutenção Preventiva', sla: 2, status: 'delayed' },
+      { name: 'Logística de Equipamentos', sla: 3.5, status: 'on-time' }
     ]
   },
   { 
-    label: 'Coleta de Resíduos', 
-    days: 0.5, 
-    totalPercentage: 90, 
-    totalSolicitations: 15400,
-    responsible: 'Carlos Silva (EMLUR)',
-    statusCounts: { started: 2100, answered: 11500, pending: 1100, completed: 700 },
-    sectors: [
-      { sigla: 'EM', percentage: 90, color: 'bg-blue-600' },
-      { sigla: 'SF', percentage: 10, color: 'bg-indigo-500' }
+    id: '2', 
+    label: 'Poda de Árvores', 
+    resolution: 35, 
+    sla: 6.1, 
+    pendencyGrowth: 22, 
+    status: 'critical', 
+    bottleneckReason: 'Aumento súbito de demandas pós-tempestades e déficit de equipes especializadas em altura.',
+    secretary: 'Dra. Márcia Silveira',
+    department: 'Autarquia de Limpeza Urbana (EMLUR)',
+    involvedSectors: [
+      { name: 'Fiscalização Ambiental', sla: 2, status: 'on-time' },
+      { name: 'Equipes Operacionais', sla: 3, status: 'critical' },
+      { name: 'Transporte de Resíduos', sla: 1.1, status: 'on-time' }
     ]
   },
-];
-
-const CRITICAL_ANALYSIS = [
-  { id: '1', label: 'Drenagem Pluvial', resolution: 28, sla: 8.5, pendencyGrowth: 15, bottleneck: 'SEURB', status: 'critical', volume: 'médio', solicitations: 3215, sectorsInvolved: ['SEURB', 'SF', 'DEFESA CIVIL'], bottleneckReason: 'Equipes reduzidas em período chuvoso.' },
-  { id: '2', label: 'Poda de Árvores', resolution: 35, sla: 6.1, pendencyGrowth: 22, bottleneck: 'EMLUR', status: 'critical', volume: 'médio', solicitations: 5410, sectorsInvolved: ['EMLUR', 'SEURB', 'SEMAM'], bottleneckReason: 'Aumento súbito de solicitações pós-tempestade.' },
-  { id: '3', label: 'Manutenção Viária', resolution: 42, sla: 5.2, pendencyGrowth: -5, bottleneck: 'SEMOB', status: 'attention', volume: 'alto', solicitations: 10100, sectorsInvolved: ['SEMOB', 'SEURB', 'SF'], bottleneckReason: 'Logística de asfalto comprometida por fornecedor.' },
-  { id: '4', label: 'Sinalização', resolution: 58, sla: 4.8, pendencyGrowth: 2, bottleneck: 'SEMOB', status: 'attention', volume: 'baixo', solicitations: 4800, sectorsInvolved: ['SEMOB', 'SEURB'], bottleneckReason: 'Aguardando entrega de insumos de sinalização horizontal.' },
-  { id: '5', label: 'Saúde Animal', resolution: 65, sla: 3.5, pendencyGrowth: 8, bottleneck: 'SESAU', status: 'ok', volume: 'baixo', solicitations: 2150, sectorsInvolved: ['SESAU'], bottleneckReason: 'Capacidade operacional normal.' },
-  { id: '6', label: 'Limpeza Urbana', resolution: 88, sla: 1.8, pendencyGrowth: -12, bottleneck: 'EMLUR', status: 'ok', volume: 'alto', solicitations: 12540, sectorsInvolved: ['EMLUR', 'SEURB', 'SF'], bottleneckReason: 'Eficiência acima da média.' },
-];
-
-const SECTOR_BOTTLENECKS = [
-  { id: 's1', name: 'SEURB', impact: 'Crítico', pending: 850, capacity: '65%', status: 'red', services: ['Drenagem Pluvial', 'Iluminação', 'Vias Públicas'], leader: 'João Mendes' },
-  { id: 's2', name: 'EMLUR', impact: 'Atenção', pending: 1100, capacity: '88%', status: 'amber', services: ['Limpeza Urbana', 'Coleta de Lixo', 'Poda'], leader: 'Carlos Silva' },
-  { id: 's3', name: 'SEMOB', impact: 'Moderado', pending: 420, capacity: '75%', status: 'blue', services: ['Sinalização', 'Trânsito', 'Semáforos'], leader: 'Fernanda Lima' },
-  { id: 's4', name: 'SESAU', impact: 'Estável', pending: 95, capacity: '92%', status: 'emerald', services: ['Saúde Animal', 'Zoonoses'], leader: 'Dra. Luana Melo' },
+  { 
+    id: '3', 
+    label: 'Manutenção Viária', 
+    resolution: 42, 
+    sla: 5.2, 
+    pendencyGrowth: -5, 
+    status: 'attention', 
+    bottleneckReason: 'Atraso no fornecimento de polímeros asfálticos devido a problemas contratuais com fornecedor.',
+    secretary: 'Cel. Alberto Costa',
+    department: 'Superintendência de Mobilidade (SEMOB)',
+    involvedSectors: [
+      { name: 'Compras e Licitações', sla: 30, status: 'delayed' },
+      { name: 'Asfaltamento Noturno', sla: 4, status: 'on-time' },
+      { name: 'Controle de Qualidade', sla: 1, status: 'on-time' }
+    ]
+  },
+  { 
+    id: '4', 
+    label: 'Sinalização', 
+    resolution: 58, 
+    sla: 4.8, 
+    pendencyGrowth: 2, 
+    status: 'attention', 
+    bottleneckReason: 'Déficit de insumos importados para sinalização horizontal termoplástica.',
+    secretary: 'Juliana Paiva',
+    department: 'Coordenação de Trânsito (SEMOB)',
+    involvedSectors: [
+      { name: 'Planejamento Viário', sla: 3, status: 'on-time' },
+      { name: 'Sinalização Vertical', sla: 1, status: 'on-time' },
+      { name: 'Execução Termoplástica', sla: 0.8, status: 'delayed' }
+    ]
+  },
 ];
 
 const RECOMMENDATIONS = [
-  { id: 'r1', title: 'Remanejar pessoal para SEURB', description: 'O tempo de resposta em Drenagem Pluvial subiu 15%. Sugerimos mover 5 técnicos do setor EM temporariamente.', category: 'RECURSOS' },
-  { id: 'r2', title: 'Priorizar Poda em Mangabeira', description: 'Mangabeira concentra 40% das podas atrasadas. Enviar equipe extra para força-tarefa.', category: 'LOGÍSTICA' },
-  { id: 'r3', title: 'Revisar SLA de Sinalização', description: 'Volume anormalmente baixo de solicitações pode indicar falha no app de reporte nesta área.', category: 'SISTEMA' },
-];
-
-const NOTIFICATION_HISTORY: NotificationItem[] = [
-  { id: 'n1', time: '08:45', title: 'Equipe enviada para reparo de cratera', department: 'SEMOB', status: 'processing' },
-  { id: 'n2', time: '09:12', title: 'Manutenção de iluminação concluída', department: 'SEURB', status: 'done' },
-  { id: 'n3', time: '10:05', title: 'Alerta de alagamento em área crítica', department: 'DEFESA CIVIL', status: 'new' },
-  { id: 'n4', time: '10:30', title: 'Coleta extraordinária de lixo', department: 'EM', status: 'done' },
-  { id: 'n5', time: '11:15', title: 'Poda de árvore em andamento', department: 'EM', status: 'processing' },
+  { id: 'r1', title: 'Remanejar pessoal para SEURB', description: 'O tempo de resposta em Drenagem Pluvial subiu 15%. Sugerimos mover equipes temporariamente do setor SF.' },
+  { id: 'r2', title: 'Priorizar Poda em Mangabeira', description: 'Concentração de 40% das podas atrasadas identificada neste quadrante.' },
 ];
 
 const Dashboard: React.FC = () => {
-  const [total, setTotal] = useState(1025880);
+  const [total, setTotal] = useState(1026262);
+  const [activeTab, setActiveTab] = useState<'solicitacoes' | 'eficiencia' | 'avaliacao'>('solicitacoes');
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [recommendationIndex, setRecommendationIndex] = useState(0);
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  const [activeTab, setActiveTab] = useState('solicitacoes');
-  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [selectedServiceDetail, setSelectedServiceDetail] = useState<ServiceMetric | null>(null);
-  
-  // Novos estados de modal para aba de eficiência
-  const [selectedCriticalItem, setSelectedCriticalItem] = useState<any | null>(null);
-  const [selectedBottleneckItem, setSelectedBottleneckItem] = useState<any | null>(null);
+  const [selectedCriticalItem, setSelectedCriticalItem] = useState<CriticalItem | null>(null);
 
-  // Estados do Mapa
-  const [selectedNeighborhood, setSelectedNeighborhood] = useState<typeof NEIGHBORHOODS[0] | null>(null);
-  const [mapMode, setMapMode] = useState<'solicitacoes' | 'calor'>('solicitacoes');
-  
   const highlights: Highlight[] = [
-    { icon: <ArrowUpRight size={16} />, label: 'TENDÊNCIA', value: '+12% em Poda de Árvore' },
+    { icon: <BrainCircuit size={16} />, label: 'ALERTA IA', value: 'Pico de tráfego em Epitácio' },
     { icon: <Zap size={16} />, label: 'MAIS SOLICITADO', value: 'Limpeza Urbana' },
-    { icon: <Bell size={16} />, label: 'ALERTA EM TEMPO REAL', value: 'Poste reparado em Torre' },
+    { icon: <Bell size={16} />, label: 'STATUS EM TEMPO REAL', value: 'Poste reparado em Torre' },
     { icon: <Star size={16} />, label: 'MELHOR AVALIADO', value: 'Iluminação Pública (4.9)' },
-  ];
-
-  const navItems = [
-    { id: 'solicitacoes', label: 'Solicitações', icon: <FileText size={18} /> },
-    { id: 'eficiencia', label: 'Baixa Eficiência', icon: <ZapOff size={18} /> },
   ];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setTotal(prev => prev + Math.floor(Math.random() * 5));
-    }, 2000);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -237,597 +276,620 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [highlights.length]);
 
-  const toggleFullScreen = () => {
+  const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => setIsFullScreen(true));
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Erro ao tentar ativar modo tela cheia: ${err.message}`);
+      });
     } else {
       if (document.exitFullscreen) {
-        document.exitFullscreen().then(() => setIsFullScreen(false));
+        document.exitFullscreen();
       }
     }
   };
 
-  const getMapColor = (count: number) => {
-    if (mapMode === 'calor') {
-      if (count >= 1000) return '#1e3a8a';
-      if (count >= 500) return '#2563eb';
-      if (count >= 100) return '#60a5fa';
-      if (count >= 1) return '#bfdbfe';
-      return '#f1f5f9';
-    }
-    if (count >= 40000) return '#1e3a8a';
-    if (count >= 25000) return '#3b82f6';
-    if (count >= 10000) return '#93c5fd';
-    if (count >= 1) return '#dbeafe';
-    return '#f1f5f9';
-  };
-
   return (
-    <div className={`transition-all duration-500 flex flex-col bg-[#f8fafc] ${isFullScreen ? 'h-screen overflow-hidden' : 'min-h-screen pb-24 md:pb-28'}`}>
-      
-      {/* HEADER PRINCIPAL */}
-      <header className={`${activeTab === 'eficiencia' ? 'bg-slate-900 border-b border-white/5' : 'blue-gradient-bg'} text-white relative overflow-hidden transition-all duration-700 rounded-b-[2rem] md:rounded-b-[4rem] flex-none
-        ${isFullScreen ? 'rounded-none px-10 pt-8 pb-12' : (activeTab === 'eficiencia' ? 'px-6 md:px-12 2xl:px-24 pt-8 md:pt-10 pb-8' : 'px-6 md:px-12 2xl:px-24 pt-8 md:pt-10 pb-32 md:pb-48 2xl:pb-56')}`}>
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col transition-all duration-500">
+      {/* Header */}
+      <header className={`${activeTab === 'eficiencia' ? 'bg-[#0a0f1e] h-auto pb-8' : 'blue-gradient-bg pb-32'} text-white px-6 md:px-12 pt-8 rounded-b-[3.5rem] relative transition-all duration-700 z-10 shadow-2xl`}>
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] 2xl:w-[1200px] 2xl:h-[1200px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
-        
-        {/* TOP NAVIGATION BAR */}
-        <nav className={`flex items-center justify-between relative z-10 max-w-[2000px] mx-auto w-full transition-all ${(activeTab === 'eficiencia') ? 'mb-0' : 'mb-12'}`}>
-          <div className="flex items-center gap-10">
-            <div className="flex items-center gap-3">
-              <div className={`${activeTab === 'eficiencia' ? 'bg-red-600/20 border-red-500/30' : 'bg-white/15 border-white/20'} rounded-xl backdrop-blur-md border p-2 transition-colors`}>
-                <LayoutGrid size={isFullScreen ? 28 : 22} className={activeTab === 'eficiencia' ? 'text-red-400' : 'text-white'} />
+        <div className="max-w-[1400px] mx-auto relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 animate-fade-in-up gap-6">
+            <div className="flex flex-wrap items-center gap-4 md:gap-10">
+              <div className="flex items-center gap-4">
+                <div className={`p-2 rounded-xl border backdrop-blur-md transition-colors ${activeTab === 'eficiencia' ? 'bg-red-500/10 border-red-500/20' : 'bg-white/15 border-white/20'}`}>
+                  <LayoutGrid size={24} className={activeTab === 'eficiencia' ? 'text-red-500' : 'text-white'} />
+                </div>
+                <h1 className="font-black text-2xl tracking-tighter">Cidade<span className={activeTab === 'eficiencia' ? 'font-light text-red-500' : 'font-light text-blue-300'}>Conectada</span></h1>
               </div>
-              <div className="block">
-                <h1 className="font-black text-xl tracking-tighter leading-none">Cidade<span className={`font-light ${activeTab === 'eficiencia' ? 'text-red-400' : 'text-blue-300'}`}>Conectada</span></h1>
-              </div>
-            </div>
 
-            <div className={`hidden lg:flex items-center ${activeTab === 'eficiencia' ? 'bg-white/5' : 'bg-black/10'} backdrop-blur-md rounded-2xl p-1 border border-white/5`}>
-              {navItems.map((item) => (
+              <nav className="flex items-center bg-black/40 backdrop-blur-xl rounded-[2rem] p-1.5 border border-white/10 shadow-inner overflow-x-auto">
                 <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl transition-all duration-300 text-sm font-bold tracking-tight
-                    ${activeTab === item.id 
-                      ? 'bg-white text-slate-900 shadow-xl' 
-                      : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                  onClick={() => setActiveTab('solicitacoes')}
+                  className={`flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] transition-all duration-500 text-[11px] uppercase tracking-widest font-black whitespace-nowrap
+                    ${activeTab === 'solicitacoes' ? 'bg-white text-slate-900 shadow-2xl scale-105' : 'text-white/40 hover:text-white'}`}
                 >
-                  <span className={activeTab === item.id ? (activeTab === 'eficiencia' ? 'text-red-600' : 'text-blue-600') : ''}>{item.icon}</span>
-                  {item.label}
+                  <FileText size={16} /> Solicitações
                 </button>
-              ))}
+                <button
+                  onClick={() => setActiveTab('eficiencia')}
+                  className={`flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] transition-all duration-500 text-[11px] uppercase tracking-widest font-black whitespace-nowrap
+                    ${activeTab === 'eficiencia' ? 'bg-white text-slate-900 shadow-2xl scale-105' : 'text-white/40 hover:text-white'}`}
+                >
+                  <ZapOff size={16} className={activeTab === 'eficiencia' ? 'text-red-600' : ''} /> Baixa Eficiência
+                </button>
+                <button
+                  onClick={() => setActiveTab('avaliacao')}
+                  className={`flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] transition-all duration-500 text-[11px] uppercase tracking-widest font-black whitespace-nowrap
+                    ${activeTab === 'avaliacao' ? 'bg-white text-slate-900 shadow-2xl scale-105' : 'text-white/40 hover:text-white'}`}
+                >
+                  <Star size={16} className={activeTab === 'avaliacao' ? 'text-yellow-500' : ''} /> Avaliação
+                </button>
+              </nav>
             </div>
-          </div>
+            
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={toggleFullscreen}
+                className={`flex items-center gap-3 px-6 py-2.5 border rounded-2xl hover:bg-white/10 transition-all text-[11px] font-black tracking-widest uppercase backdrop-blur-sm group ${activeTab === 'eficiencia' ? 'border-white/20 text-white bg-white/5' : 'border-white/20 text-white'}`}
+              >
+                <Maximize2 size={16} className={`group-hover:scale-110 transition-transform ${activeTab === 'eficiencia' ? 'text-white' : ''}`} /> 
+                EXPANDIR
+              </button>
+              
+              <div className="h-10 w-px bg-white/10" />
 
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={toggleFullScreen}
-              className={`bg-white/10 hover:bg-white/20 rounded-xl border border-white/20 transition-all flex items-center gap-3 p-2.5 px-4`}
-            >
-              {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-              <span className="hidden sm:inline font-bold text-[10px] uppercase tracking-widest">{isFullScreen ? 'REDUZIR' : 'EXPANDIR'}</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-white/10">
-              <div className={`rounded-xl ${activeTab === 'eficiencia' ? 'bg-red-600' : 'bg-blue-600'} flex items-center justify-center border border-white/10 w-9 h-9 shadow-inner transition-colors`}>
-                <User size={18} />
+              <div className={`rounded-2xl w-11 h-11 flex items-center justify-center border shadow-2xl hover:rotate-12 transition-transform cursor-pointer ${activeTab === 'eficiencia' ? 'bg-red-600 border-red-500' : 'bg-blue-600 border-white/10'}`}>
+                <User size={22} />
               </div>
             </div>
           </div>
-        </nav>
 
-        {activeTab === 'solicitacoes' && (
-          <div className="max-w-[2000px] mx-auto relative z-10 w-full flex flex-col lg:flex-row lg:items-center justify-between gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {(activeTab === 'solicitacoes' || activeTab === 'avaliacao') && (
+            <div className="flex flex-col lg:flex-row justify-between items-end gap-12 animate-fade-in-up pb-4">
               <div className="flex-1">
-                <p className="text-blue-300 uppercase tracking-[0.4em] font-black flex items-center gap-2 mb-3 text-[10px]">
-                  <Activity className="size-4 animate-pulse" /> MONITORAMENTO LIVE
+                <p className="text-blue-300 uppercase tracking-widest font-black text-[10px] mb-2 flex items-center gap-2">
+                  <Activity size={14} className="animate-pulse text-emerald-400" /> Monitoramento Live
                 </p>
-                <h2 className="font-black tracking-tighter leading-[0.8] transition-all drop-shadow-2xl mb-8 text-6xl md:text-[10rem] 2xl:text-[14rem]">
+                <h2 className="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-6">
                   <AnimatedCounter target={total} />
                 </h2>
-                
-                <div 
-                  onClick={() => setIsHistoryModalOpen(true)}
-                  className={`group cursor-pointer w-full max-w-lg relative h-16 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden shadow-2xl transition-all hover:bg-white/15 hover:scale-[1.01] active:scale-[0.99]`}
-                >
+                <div className="group cursor-pointer w-full max-w-lg relative h-14 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden shadow-2xl transition-all hover:bg-white/15">
                   {highlights.map((item, idx) => (
-                    <div 
-                      key={idx}
-                      className={`absolute inset-0 flex items-center gap-4 px-5 transition-all duration-1000 ease-in-out
-                        ${idx === highlightIndex ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}
-                    >
+                    <div key={idx} className={`absolute inset-0 flex items-center gap-4 px-5 transition-all duration-1000 ease-in-out ${idx === highlightIndex ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
                       <div className="bg-blue-600/40 p-2 rounded-lg border border-white/10 group-hover:bg-blue-600/60 transition-colors">
-                        {React.isValidElement(item.icon) && React.cloneElement(item.icon as React.ReactElement<any>, { className: 'text-white', size: 16 })}
+                        {item.icon}
                       </div>
                       <div className="flex-1 min-w-0">
                         <span className="text-[9px] font-black uppercase tracking-widest text-blue-200/80">{item.label}</span>
-                        <span className="text-base font-bold text-white truncate block">{item.value}</span>
+                        <span className="text-sm font-bold text-white truncate block leading-tight">{item.value}</span>
                       </div>
-                      <div className="text-white/30 group-hover:text-white/60 transition-colors">
-                         <ChevronRight size={18} />
-                      </div>
+                      <ChevronRight size={16} className="text-white/30 group-hover:text-white/60 group-hover:translate-x-1 transition-all" />
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="bg-white/5 rounded-[2.5rem] border border-white/10 backdrop-blur-xl shadow-2xl w-full lg:w-96 2xl:w-[500px] p-8 transition-all">
-                 <div className="flex items-center gap-3 mb-6">
-                    <TrendingUp className="text-blue-300 size-6 md:size-8" />
-                    <h4 className="font-black text-xl md:text-2xl text-white">Eficiência Geral</h4>
-                 </div>
-                 <div className="space-y-4">
-                    <div className="flex justify-between items-center bg-white/5 rounded-2xl border border-white/5 p-4 md:p-6">
-                       <span className="font-black uppercase tracking-widest text-[10px] md:text-xs text-blue-300">Satisfação Média</span>
-                       <div className="flex items-center gap-2">
-                          <span className="font-black text-2xl md:text-3xl text-white">4.8</span>
-                          <Star className="text-yellow-400 fill-current size-4 md:size-5" />
-                       </div>
-                    </div>
-                    <div className="flex justify-between items-center bg-white/5 rounded-2xl border border-white/5 p-4 md:p-6">
-                       <span className="font-black uppercase tracking-widest text-[10px] md:text-xs text-blue-300">Resolução (24h)</span>
-                       <span className="font-black text-2xl md:text-3xl text-emerald-400">92%</span>
-                    </div>
-                 </div>
+
+              <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-3xl p-8 min-w-[320px] shadow-2xl">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-2">
+                     <TrendingUp className="text-blue-300" size={16} />
+                     <span className="text-[10px] font-black uppercase tracking-widest text-blue-200">Eficiência Geral</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-yellow-400"><Star size={14} fill="currentColor" /> <span className="text-white font-black">4.8</span></div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                     <div className="flex justify-between items-center text-[10px] font-bold text-blue-200 uppercase mb-2 tracking-tighter">
+                        <span>Resolução (24h)</span>
+                        <span>92%</span>
+                     </div>
+                     <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                       <div className="h-full bg-blue-400 w-[92%] transition-all duration-1000 ease-out" />
+                     </div>
+                  </div>
+                </div>
               </div>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </header>
 
-      {/* BARRA DE NAVEGAÇÃO MOBILE */}
-      <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[calc(100%-3rem)] max-w-lg">
-        <div className="bg-white/80 backdrop-blur-xl border border-gray-100 rounded-3xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] p-2 flex items-center justify-between">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300
-                ${activeTab === item.id 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-105' 
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
-            >
-              {React.cloneElement(item.icon as React.ReactElement<any>, { size: 20 })}
-              <span className="text-[10px] font-black uppercase tracking-tighter">{item.label.split(' ')[0]}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Main Content Area */}
+      <main className={`max-w-[1400px] mx-auto w-full px-6 md:px-12 pb-20 transition-all duration-700 relative z-20 ${activeTab === 'eficiencia' ? 'mt-12' : '-mt-16'}`}>
+        
+        {/* Metric Cards Row */}
+        <div className={`grid grid-cols-1 ${activeTab === 'solicitacoes' ? 'md:grid-cols-3' : activeTab === 'avaliacao' ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-6 mb-12`}>
+          {activeTab === 'solicitacoes' && (
+            <>
+              <MetricCard label="NOVAS SOLICITAÇÕES" value={1026262} icon={<FileText size={20} />} color="blue" delay="0s" />
+              <MetricCard label="EM ATENDIMENTO" value={51313} icon={<Clock size={20} />} color="orange" delay="0.1s" />
+              <MetricCard label="CONCLUÍDAS" value={2450} icon={<CheckCircle size={20} />} color="emerald" delay="0.2s" />
+            </>
+          )}
 
-      {/* CONTEÚDO DINÂMICO - SOLICITAÇÕES */}
-      {activeTab === 'solicitacoes' && (
-        <>
-          <div className={`max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 relative z-20 grid grid-cols-1 md:grid-cols-3 gap-6 transition-all ${isFullScreen ? '-mt-20 md:-mt-24 2xl:-mt-32 mb-10' : '-mt-16 md:-mt-24 2xl:-mt-28'}`}>
-            <MetricCard label="NOVAS SOLICITAÇÕES" value={total} icon={<FileText />} color="blue" isFS={isFullScreen} />
-            <MetricCard label="EM ATENDIMENTO" value={Math.floor(total * 0.05)} icon={<Clock />} color="orange" isFS={isFullScreen} />
-            <MetricCard label="CONCLUÍDAS" value={2450} icon={<CheckCircle />} color="emerald" isFS={isFullScreen} />
-          </div>
-          <main className={`max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 flex flex-col lg:flex-row gap-8 transition-all ${isFullScreen ? 'mt-4 pb-12' : 'mt-8 md:mt-12'}`}>
-            <section className={`lg:w-2/3 bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 transition-all ${isFullScreen ? 'p-10 md:p-14' : 'p-10 md:p-12'}`}>
-              <h3 className="font-black text-gray-900 tracking-tighter text-xl md:text-2xl 2xl:text-4xl mb-10">Serviços e Participação</h3>
-              <div className={`space-y-6 ${isFullScreen ? 'max-h-[60vh] overflow-y-auto custom-scrollbar pr-4' : ''}`}>
+          {activeTab === 'eficiencia' && (
+            <>
+              <MetricCard label="GARGALOS CRÍTICOS" value={4} subtitle="SERVIÇOS TRAVADOS" icon={<AlertCircle size={20} />} color="red" delay="0s" />
+              <MetricCard label="SLA OVERFLOW" value={850} subtitle="DEMANDAS ATRASADAS" icon={<Clock size={20} />} color="orange" delay="0.1s" />
+              <MetricCard label="SOBRECARGA SETOR" value="SEURB" subtitle="DEPARTAMENTO CRÍTICO" icon={<BarChart3 size={20} />} color="red" delay="0.2s" />
+              <MetricCard label="QUEDA EFICIÊNCIA" value={18} formatter={(v) => `-${v}%`} subtitle="COMPARADO AO MÊS ANTERIOR" icon={<TrendingDown size={20} />} color="orange" delay="0.3s" />
+            </>
+          )}
+
+          {activeTab === 'avaliacao' && (
+            <>
+              <MetricCard label="NOTA MÉDIA GERAL" value={4.8} formatter={(v) => v.toFixed(1)} subtitle="SCORE DE SATISFAÇÃO" icon={<Star size={20} />} color="blue" delay="0s" />
+              <MetricCard label="FEEDBACKS POSITIVOS" value={8500} formatter={(v) => `${(v/100).toFixed(0)}%`} subtitle="SENTIMENTO POSITIVO" icon={<ThumbsUp size={20} />} color="emerald" delay="0.1s" />
+              <MetricCard label="SERVIÇOS AVALIADOS" value={1240} icon={<Award size={20} />} color="orange" delay="0.2s" />
+            </>
+          )}
+        </div>
+
+        {/* --- ABA SOLICITAÇÕES --- */}
+        {activeTab === 'solicitacoes' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in-up">
+            <section className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-8 md:p-12 transition-all duration-500">
+              <h3 className="font-black text-slate-900 text-3xl mb-12 tracking-tighter">
+                 Serviços e Participação
+              </h3>
+              <div className="space-y-12">
                 {METRICS_DATA.map((metric, idx) => (
-                  <div 
-                    key={metric.label} 
-                    onClick={() => setSelectedServiceDetail(metric)}
-                    className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 border-b border-gray-50 pb-6 last:border-0 last:pb-0 cursor-pointer hover:bg-slate-50 transition-all p-3 -m-3 rounded-2xl group"
-                  >
-                    <div className="font-bold text-gray-300 shrink-0 w-8 text-sm">{(idx + 1).toString().padStart(2, '0')}</div>
-                    <div className="shrink-0 md:w-48 xl:w-64">
-                      <h4 className="font-black text-gray-800 text-base md:text-lg group-hover:text-blue-600 transition-colors">{metric.label}</h4>
-                    </div>
+                  <div key={idx} onClick={() => setSelectedServiceDetail(metric)} className="flex items-center gap-8 cursor-pointer group hover:bg-slate-50 p-6 -m-6 rounded-[2.5rem] transition-all">
+                    <div className="w-10 shrink-0 text-slate-300 font-black text-sm">{(idx + 1).toString().padStart(2, '0')}</div>
+                    <div className="w-52 shrink-0 font-black text-blue-700 text-base">{metric.label}</div>
                     <div className="flex-1">
-                      <div className="w-full bg-gray-50 rounded-xl overflow-hidden flex shadow-inner h-8 md:h-12 relative">
+                      <div className="w-full h-11 bg-slate-100 rounded-2xl overflow-hidden flex shadow-inner relative">
                         {metric.sectors.map((sector, sIdx) => (
-                          <div key={sIdx} className={`${sector.color} h-full transition-all duration-1000 flex items-center justify-center`} style={{ width: `${sector.percentage}%` }}>
-                            <span className="font-black text-white/95 text-[8px] md:text-[10px] px-1 uppercase tracking-tighter whitespace-nowrap">
-                              {sector.sigla} {sector.percentage}%
-                            </span>
+                          <div key={sIdx} className={`${sector.color} h-full transition-all duration-1000 ease-out flex items-center justify-center hover:brightness-110`} style={{ width: `${sector.percentage}%` }}>
+                            <span className="text-[9px] font-black text-white/90 uppercase px-2 whitespace-nowrap">{sector.sigla} {sector.percentage}%</span>
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="text-right shrink-0 md:w-32 flex items-center justify-end gap-3">
-                      <p className="font-black text-gray-400 uppercase tracking-widest text-[9px]"><span className="text-gray-900 block font-black text-base">{metric.totalSolicitations.toLocaleString('pt-BR')}</span>solicit.</p>
-                      <ChevronRight size={16} className="text-gray-300 group-hover:text-blue-600 transition-all" />
+                    <div className="w-28 text-right shrink-0">
+                      <div className="flex flex-col items-end">
+                        <span className="font-black text-slate-900 text-lg leading-none mb-1">{metric.totalSolicitations.toLocaleString('pt-BR')}</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Solicit.</span>
+                      </div>
+                    </div>
+                    <div className="w-6 shrink-0 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all"><ChevronRight size={20} /></div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-8 md:p-10 hover:shadow-2xl transition-all duration-500">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="bg-blue-50 p-2 rounded-lg text-blue-600"><Timer size={20} className="animate-spin-slow" /></div>
+                <h3 className="font-black text-gray-900 text-lg">Tempo de Resposta</h3>
+              </div>
+              <div className="space-y-6">
+                {METRICS_DATA.map((metric, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-white hover:shadow-lg transition-all border border-transparent hover:border-blue-50 group">
+                    <span className="text-xs font-bold text-gray-600 group-hover:text-slate-900 transition-colors">{metric.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-black ${metric.days > 3 ? 'text-red-500' : 'text-emerald-500'}`}>{metric.days}d</span>
+                      <div className={`w-2 h-2 rounded-full ${metric.days > 3 ? 'bg-red-500 shadow-sm' : 'bg-emerald-500 shadow-sm'} ${idx === 0 ? 'animate-pulse' : ''}`} />
                     </div>
                   </div>
                 ))}
               </div>
             </section>
-            <section className={`lg:w-1/3 bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-2xl border border-gray-100 transition-all ${isFullScreen ? 'p-10 md:p-14' : 'p-10 md:p-12'}`}>
-              <div className="flex items-center gap-4 mb-10">
-                <div className="bg-blue-50 p-4 rounded-2xl text-blue-600"><Timer size={28} /></div>
-                <div><h3 className="font-black text-gray-900 text-xl md:text-2xl">Tempo de Resposta</h3><p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">SLA POR SERVIÇO</p></div>
-              </div>
-              <div className={`space-y-4 ${isFullScreen ? 'max-h-[60vh] overflow-y-auto custom-scrollbar pr-2' : ''}`}>
-                {METRICS_DATA.map((metric, idx) => {
-                  const isCritical = metric.days > 3;
-                  return (
-                    <div key={`sla-${idx}`} className="flex items-center justify-between p-5 bg-gray-50/50 rounded-[1.5rem] border border-gray-100 group hover:bg-white hover:shadow-xl transition-all">
-                      <div className="flex flex-col min-w-0 pr-4">
-                        <span className="text-sm font-black text-gray-800 truncate mb-1">{metric.label}</span>
-                        <div className="flex items-center gap-2">
-                          <span className={`font-black text-2xl ${isCritical ? 'text-red-600' : 'text-emerald-500'}`}>{metric.days}</span>
-                          <span className="text-[9px] font-bold text-gray-400 tracking-widest mt-1">DIAS MÉDIO</span>
+          </div>
+        )}
+
+        {/* --- ABA BAIXA EFICIÊNCIA --- */}
+        {activeTab === 'eficiencia' && (
+          <div className="space-y-8 animate-fade-in-up">
+            <section className="bg-slate-900 rounded-[3rem] border border-white/10 shadow-2xl overflow-hidden p-10 md:p-14 group">
+               <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[120px] pointer-events-none group-hover:scale-110 transition-transform duration-[4000ms]" />
+               <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-12">
+                  <div className="flex-1 max-w-2xl">
+                     <div className="flex items-center gap-4 mb-8">
+                        <div className="bg-red-600 p-3 rounded-2xl shadow-xl shadow-red-900/40 animate-pulse"><Target className="text-white" size={28} /></div>
+                        <span className="text-red-500 font-black text-xs uppercase tracking-[0.4em]">IA: Recomendação Estratégica</span>
+                     </div>
+                     <div className="relative h-28 overflow-hidden">
+                        {RECOMMENDATIONS.map((rec, idx) => (
+                          <div key={rec.id} className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === recommendationIndex ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+                             <h3 className="text-white text-2xl md:text-3xl font-black mb-3 tracking-tighter">{rec.title}</h3>
+                             <p className="text-slate-400 text-base md:text-lg font-medium leading-relaxed">{rec.description}</p>
+                          </div>
+                        ))}
+                     </div>
+                  </div>
+                  <button className="px-10 py-5 bg-red-600 hover:bg-red-700 text-white font-black rounded-[1.5rem] shadow-2xl shadow-red-900/60 transition-all active:scale-95 flex items-center justify-center gap-4 text-xs tracking-widest uppercase">
+                    <ShieldAlert size={20} /> NOTIFICAR CENTRAIS
+                  </button>
+               </div>
+            </section>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+               <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
+                  <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                     <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
+                        <ZapOff size={24} className="text-red-500 animate-pulse" /> Ranking de Criticidade
+                     </h3>
+                  </div>
+                  <div className="p-4">
+                     {CRITICAL_ANALYSIS.map((item, idx) => (
+                       <div key={item.id} onClick={() => setSelectedCriticalItem(item)} className="flex items-center justify-between p-5 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer group border border-transparent hover:border-slate-100">
+                          <div className="flex items-center gap-6">
+                             <span className="font-black text-slate-300 text-sm">{(idx + 1).toString().padStart(2, '0')}</span>
+                             <span className="font-black text-slate-800 text-base group-hover:text-red-600 transition-colors">{item.label}</span>
+                          </div>
+                          <div className="flex items-center gap-8">
+                             <div className="text-right">
+                                <p className="font-black text-slate-900 text-sm">{item.resolution}%</p>
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Resolução</p>
+                             </div>
+                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.status === 'critical' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'}`}>
+                                {item.status === 'critical' ? 'Crítico' : 'Atenção'}
+                             </span>
+                          </div>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+               
+               <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-10">
+                  <h3 className="text-xl font-black text-slate-800 mb-8 flex items-center gap-3">
+                     <Trophy size={24} className="text-red-600" /> Gargalos por Setor (Ranking)
+                  </h3>
+                  <div className="space-y-8 overflow-y-auto custom-scrollbar pr-2 max-h-[500px]">
+                    {SECTOR_RANKING.map((sector, idx) => (
+                      <div key={sector.id} className="relative p-6 rounded-[2rem] bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-2xl hover:border-red-100 transition-all group overflow-hidden">
+                        {/* Rank Background Number */}
+                        <div className="absolute top-2 right-6 text-7xl font-black text-slate-200/40 group-hover:text-red-200/40 transition-colors pointer-events-none">
+                          {(idx + 1).toString().padStart(2, '0')}
+                        </div>
+                        
+                        <div className="relative z-10">
+                          <div className="flex items-center gap-4 mb-4">
+                             <div className={`p-3 rounded-xl shadow-lg transition-transform group-hover:scale-110 ${sector.impact === 'Crítico' ? 'bg-red-600 text-white shadow-red-900/20' : 'bg-blue-600 text-white shadow-blue-900/20'}`}>
+                                <BarChart3 size={20} />
+                             </div>
+                             <div>
+                                <h4 className="font-black text-slate-900 text-xl leading-none">{sector.name}</h4>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${sector.impact === 'Crítico' ? 'text-red-600' : 'text-blue-600'}`}>Impacto {sector.impact}</span>
+                             </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-6 mb-5">
+                            <div>
+                               <p className="text-2xl font-black text-slate-900 tracking-tighter">{sector.pending.toLocaleString('pt-BR')}</p>
+                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Processos Pendentes</span>
+                            </div>
+                            <div className="text-right">
+                               <p className="text-2xl font-black text-red-600 tracking-tighter">{sector.efficiency}%</p>
+                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Eficiência Atual</span>
+                            </div>
+                          </div>
+
+                          <div className="h-2 bg-slate-200 rounded-full overflow-hidden mb-4">
+                             <div className={`h-full rounded-full transition-all duration-[2000ms] ${sector.impact === 'Crítico' ? 'bg-red-600' : 'bg-blue-600'}`} style={{ width: `${100 - sector.efficiency}%` }} />
+                          </div>
+
+                          <div className="flex items-center gap-3 pt-3 border-t border-slate-200/60">
+                             <div className="bg-slate-200 w-6 h-6 rounded-full flex items-center justify-center text-slate-500">
+                                <User size={12} />
+                             </div>
+                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Secretário: {sector.secretary}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${isCritical ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-500'} border border-current/10 shrink-0 shadow-sm`}><span className="text-[10px] font-black tracking-widest uppercase">{isCritical ? 'CRÍTICO' : 'OK'}</span></div>
+                    ))}
+                  </div>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- ABA AVALIAÇÃO --- */}
+        {activeTab === 'avaliacao' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in-up">
+             {/* Esquerda: Satisfação por Estrelas */}
+             <section className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-10 flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-10">
+                   <div className="bg-yellow-50 p-2 rounded-lg text-yellow-600"><Star size={24} fill="currentColor" /></div>
+                   <h3 className="font-black text-slate-900 text-xl tracking-tighter">Satisfação Detalhada</h3>
+                </div>
+
+                <div className="space-y-8 flex-1">
+                   {[5, 4, 3, 2, 1].map((stars) => {
+                      const percentage = stars === 5 ? 85 : stars === 4 ? 10 : 2;
+                      return (
+                        <div key={stars} className="space-y-2">
+                           <div className="flex justify-between items-center">
+                              <div className="flex gap-0.5">
+                                 {[...Array(5)].map((_, i) => (
+                                    <Star key={i} size={14} className={i < stars ? 'text-yellow-400' : 'text-slate-200'} fill={i < stars ? 'currentColor' : 'none'} />
+                                 ))}
+                              </div>
+                              <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">{percentage}%</span>
+                           </div>
+                           <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
+                              <div className={`h-full transition-all duration-1000 ${stars >= 4 ? 'bg-emerald-500' : stars === 3 ? 'bg-yellow-400' : 'bg-red-500'}`} style={{ width: `${percentage}%` }} />
+                           </div>
+                        </div>
+                      );
+                   })}
+                </div>
+
+                <div className="mt-10 p-6 bg-slate-900 rounded-3xl border border-white/10 text-center relative overflow-hidden group">
+                   <div className="absolute top-0 left-0 w-full h-full bg-blue-600/10 scale-0 group-hover:scale-150 transition-transform duration-1000" />
+                   <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2 relative z-10">Score IA Sugerido</p>
+                   <p className="text-white text-4xl font-black tracking-tighter relative z-10">9.2<span className="text-xl text-emerald-400">/10</span></p>
+                </div>
+             </section>
+
+             {/* Meio: Feedback Recente */}
+             <section className="lg:col-span-2 space-y-8">
+                <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-10">
+                   <div className="flex items-center justify-between mb-10">
+                      <h3 className="font-black text-slate-900 text-2xl tracking-tighter flex items-center gap-3">
+                         <MessageSquare className="text-blue-600" size={24} /> Feedbacks em Tempo Real
+                      </h3>
+                      <button className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:underline">Ver Todos</button>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {EVALUATION_RECORDS.map((record) => (
+                         <div key={record.id} className="p-6 bg-slate-50 border border-slate-100 rounded-[2rem] hover:bg-white hover:shadow-2xl transition-all group">
+                            <div className="flex justify-between items-start mb-4">
+                               <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs uppercase tracking-tighter">
+                                     {record.citizen.charAt(0)}
+                                  </div>
+                                  <div>
+                                     <p className="font-black text-slate-900 text-sm leading-none mb-1">{record.citizen}</p>
+                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{record.date}</p>
+                                  </div>
+                               </div>
+                               <div className="flex">
+                                  {[...Array(5)].map((_, i) => (
+                                     <Star key={i} size={10} className={i < record.rating ? 'text-yellow-400' : 'text-slate-300'} fill={i < record.rating ? 'currentColor' : 'none'} />
+                                  ))}
+                               </div>
+                            </div>
+                            <p className="text-xs font-medium text-slate-600 leading-relaxed italic mb-4">"{record.comment}"</p>
+                            <div className="flex items-center gap-2 pt-3 border-t border-slate-200/50">
+                               <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest px-2 py-0.5 bg-blue-50 rounded-md">{record.service}</span>
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-10 flex flex-col md:flex-row items-center gap-8 group">
+                   <div className="bg-emerald-100 p-6 rounded-[2rem] text-emerald-600 group-hover:scale-110 transition-transform">
+                      <ThumbsUp size={40} />
+                   </div>
+                   <div className="flex-1 text-center md:text-left">
+                      <h4 className="font-black text-slate-900 text-xl tracking-tighter mb-2">Serviço Destaque do Mês</h4>
+                      <p className="text-slate-500 text-sm leading-relaxed max-w-md">O serviço de <strong>Iluminação Pública</strong> atingiu a marca histórica de 98% de avaliações positivas no último período.</p>
+                   </div>
+                   <div className="w-full md:w-auto">
+                      <button className="w-full md:w-auto px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-2xl shadow-xl shadow-emerald-200 transition-all text-xs uppercase tracking-widest">
+                         Parabenizar Equipe
+                      </button>
+                   </div>
+                </div>
+             </section>
+          </div>
+        )}
+      </main>
+
+      {/* MODAL ANÁLISE CRÍTICA (Ranking de Criticidade) */}
+      {selectedCriticalItem && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 animate-fade-in-up">
+           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedCriticalItem(null)} />
+           <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col">
+              {/* Header Modal - Cor dinâmica conforme status */}
+              <div className={`${selectedCriticalItem.status === 'critical' ? 'bg-red-600' : 'bg-amber-500'} p-10 text-white flex justify-between items-center relative`}>
+                 <div className="flex items-center gap-6">
+                    <div className="bg-white/10 p-4 rounded-2xl border border-white/20 shadow-lg">
+                       <AlertCircle size={32} className="animate-pulse" />
                     </div>
-                  );
-                })}
+                    <div>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1 block">ANÁLISE DE CRITICIDADE</span>
+                       <h3 className="text-3xl font-black tracking-tighter leading-none">{selectedCriticalItem.label}</h3>
+                    </div>
+                 </div>
+                 <button onClick={() => setSelectedCriticalItem(null)} className="p-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 transition-colors">
+                    <X size={24} />
+                 </button>
               </div>
-            </section>
-          </main>
-        </>
+
+              <div className="p-10 space-y-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                 {/* Responsável e Setor */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><User size={14} /> SECRETÁRIO RESPONSÁVEL</h4>
+                       <div className="bg-slate-50 border border-slate-100 rounded-[1.5rem] p-6 flex items-center gap-5">
+                          <div className="bg-blue-100 p-3 rounded-xl text-blue-600"><User size={28} /></div>
+                          <div>
+                             <p className="font-black text-slate-900 text-lg leading-tight">{selectedCriticalItem.secretary}</p>
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">TITULAR DA PASTA</p>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="space-y-4">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Layers size={14} /> DEPARTAMENTO</h4>
+                       <div className="bg-slate-50 border border-slate-100 rounded-[1.5rem] p-6">
+                          <p className="text-sm font-black text-slate-800 mb-1">{selectedCriticalItem.department}</p>
+                          <span className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[8px] font-black uppercase tracking-widest">Setor Crítico</span>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Motivo do Gargalo */}
+                 <div className="space-y-4">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><AlertTriangle size={14} className="text-red-500" /> MOTIVO DO GARGALO (IA ANALYTICS)</h4>
+                    <div className="bg-red-50 border border-red-100 p-8 rounded-[2rem] relative">
+                       <p className="text-red-900 text-base font-medium leading-relaxed italic">"{selectedCriticalItem.bottleneckReason}"</p>
+                    </div>
+                 </div>
+
+                 {/* Setores Envolvidos e SLA */}
+                 <div className="space-y-6">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Users size={14} /> FLUXO OPERACIONAL E SLA POR SETOR</h4>
+                    <div className="space-y-3">
+                       {selectedCriticalItem.involvedSectors.map((sector, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                             <div className="flex items-center gap-4">
+                                <div className={`w-2.5 h-2.5 rounded-full ${sector.status === 'critical' ? 'bg-red-600 animate-pulse' : sector.status === 'delayed' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                                <span className="font-bold text-slate-700 text-sm">{sector.name}</span>
+                             </div>
+                             <div className="flex items-center gap-4">
+                                <span className={`text-xs font-black ${sector.status === 'critical' ? 'text-red-600' : 'text-slate-500'}`}>{sector.sla} dias (SLA)</span>
+                                <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${sector.status === 'critical' ? 'bg-red-50 text-red-600' : sector.status === 'delayed' ? 'bg-amber-50 text-amber-600' : sector.status === 'delayed' ? 'bg-amber-50 text-amber-600' : sector.status === 'emerald-50 text-emerald-600'}`}>
+                                   {sector.status === 'critical' ? 'Crítico' : sector.status === 'delayed' ? 'Atrasado' : 'No Prazo'}
+                                </span>
+                             </div>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <button onClick={() => setSelectedCriticalItem(null)} className="w-full py-6 bg-slate-900 hover:bg-black text-white font-black rounded-3xl text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95">
+                    FECHAR RELATÓRIO DE CRITICIDADE
+                 </button>
+              </div>
+           </div>
+        </div>
       )}
 
-      {/* MODAL DE DETALHES DO SERVIÇO */}
+      {/* Modal Detalhes do Serviço (Aba Solicitações) */}
       {selectedServiceDetail && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedServiceDetail(null)} />
-           <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-in zoom-in-95 duration-500">
-              <div className="p-8 text-white blue-gradient-bg">
-                 <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-4">
-                       <div className="bg-white/10 p-3 rounded-2xl"><Activity size={28} /></div>
-                       <div>
-                          <span className="text-white/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-1">DETALHES DO SERVIÇO</span>
-                          <h3 className="text-3xl font-black tracking-tighter leading-none">{selectedServiceDetail.label}</h3>
-                       </div>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+           <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={() => setSelectedServiceDetail(null)} />
+           <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-fade-in-up">
+              <div className="bg-[#1e3a8a] p-10 text-white flex justify-between items-center relative">
+                 <div className="flex items-center gap-6">
+                    <div className="bg-white/10 p-4 rounded-2xl border border-white/20">
+                      <Activity size={32} />
                     </div>
-                    <button onClick={() => setSelectedServiceDetail(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><X size={20} /></button>
+                    <div>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1 block">DETALHES DO SERVIÇO</span>
+                       <h3 className="text-4xl font-black tracking-tighter leading-none">{selectedServiceDetail.label}</h3>
+                    </div>
                  </div>
+                 <button onClick={() => setSelectedServiceDetail(null)} className="p-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 transition-colors"><X size={24} /></button>
               </div>
-              
-              <div className="p-8 space-y-8 flex-1 overflow-y-auto custom-scrollbar">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                       <div className="flex items-center gap-2 text-slate-400 uppercase tracking-widest text-[9px] font-black">
-                          <Briefcase size={12} /> Responsável Direto
-                       </div>
-                       <div className="p-5 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-600">
-                             <User size={20} />
+
+              <div className="p-10 space-y-12">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><User size={14} /> RESPONSÁVEL DIRETO</h4>
+                       <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-6 flex items-center gap-5">
+                          <div className="bg-blue-100 p-3 rounded-xl text-blue-600">
+                             <User size={28} />
                           </div>
                           <div>
-                             <p className="font-black text-slate-900">{selectedServiceDetail.responsible || 'Coordenador Operacional'}</p>
-                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gestor do Serviço</p>
+                             <p className="font-black text-slate-900 text-lg leading-tight">{selectedServiceDetail.responsible || 'Sem Gestor'}</p>
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{selectedServiceDetail.responsibleRole || 'CARGO'}</p>
                           </div>
                        </div>
                     </div>
-
-                    <div className="space-y-3">
-                       <div className="flex items-center gap-2 text-slate-400 uppercase tracking-widest text-[9px] font-black">
-                          <Layers size={12} /> Setores Participantes
-                       </div>
-                       <div className="flex flex-wrap gap-2">
+                    <div className="space-y-4">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Layers size={14} /> SETORES PARTICIPANTES</h4>
+                       <div className="flex flex-wrap gap-3">
                           {selectedServiceDetail.sectors.map((s, idx) => (
-                            <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-100 rounded-lg shadow-sm">
-                               <div className={`w-2 h-2 rounded-full ${s.color}`} />
-                               <span className="font-black text-slate-700 text-[10px]">{s.sigla}</span>
-                            </div>
+                             <div key={idx} className="bg-white border border-slate-100 shadow-sm rounded-xl px-5 py-2.5 flex items-center gap-2.5">
+                                <div className={`w-2.5 h-2.5 rounded-full ${s.color}`} />
+                                <span className="text-[11px] font-black text-slate-700 uppercase tracking-widest">{s.sigla}</span>
+                             </div>
                           ))}
                        </div>
                     </div>
                  </div>
 
-                 <div className="space-y-5">
-                    <div className="flex items-center justify-between">
-                       <h4 className="text-slate-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-                          <FileText size={12} /> Resumo de Solicitações
-                       </h4>
-                       <span className="text-slate-800 font-black text-sm">Total: {selectedServiceDetail.totalSolicitations.toLocaleString('pt-BR')}</span>
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                       <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><FileText size={14} /> RESUMO DE SOLICITAÇÕES</h4>
+                       <span className="text-sm font-black text-slate-900 tracking-tight">Total: {selectedServiceDetail.totalSolicitations.toLocaleString('pt-BR')}</span>
                     </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                       <StatusBox label="Iniciadas" value={selectedServiceDetail.statusCounts?.started || 0} color="text-blue-600" bg="bg-blue-50" />
-                       <StatusBox label="Respondidas" value={selectedServiceDetail.statusCounts?.answered || 0} color="text-indigo-600" bg="bg-indigo-50" />
-                       <StatusBox label="Pendentes" value={selectedServiceDetail.statusCounts?.pending || 0} color="text-orange-600" bg="bg-orange-50" />
-                       <StatusBox label="Concluídas" value={selectedServiceDetail.statusCounts?.completed || 0} color="text-emerald-600" bg="bg-emerald-50" />
-                    </div>
-                 </div>
-              </div>
-
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-4">
-                 <button onClick={() => setSelectedServiceDetail(null)} className="flex-1 py-3 bg-blue-600 text-white font-black rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-blue-200 active:scale-95 transition-all">CONCLUIR ANÁLISE</button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* PÁGINA BAIXA EFICIÊNCIA */}
-      {activeTab === 'eficiencia' && (
-        <main className="max-w-[2000px] mx-auto w-full px-6 md:px-12 2xl:px-24 mt-8 flex-1 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-6 duration-700 pb-20">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-             <EfficiencyCard label="GARGALOS CRÍTICOS" value={4} icon={<AlertCircle />} color="red" sub="SERVIÇOS TRAVADOS" />
-             <EfficiencyCard label="SLA OVERFLOW" value={850} icon={<Clock />} color="orange" sub="DEMANDAS ATRASADAS" />
-             <EfficiencyCard label="SOBRECARGA SETOR" value={0} formatter={() => "SEURB"} icon={<BarChart3 />} color="rose" sub="DEPARTAMENTO CRÍTICO" />
-             <EfficiencyCard label="QUEDA EFICIÊNCIA" value={18} formatter={(v) => `-${v}%`} icon={<TrendingDown />} color="amber" sub="COMPARADO AO MÊS ANTERIOR" />
-          </div>
-
-          <section className="bg-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden p-10 md:p-12">
-             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[120px] pointer-events-none" />
-             <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-                <div className="flex-1 max-w-2xl">
-                   <div className="flex items-center gap-3 mb-6">
-                      <div className="bg-red-600 p-2.5 rounded-xl shadow-lg shadow-red-900/40">
-                         <Target className="text-white" size={24} />
-                      </div>
-                      <span className="text-red-400 font-black text-xs uppercase tracking-[0.3em]">IA: Recomendação Estratégica</span>
-                   </div>
-                   <div className="relative h-40 md:h-28 overflow-hidden">
-                      {RECOMMENDATIONS.map((rec, idx) => (
-                        <div 
-                          key={rec.id}
-                          className={`absolute inset-0 transition-all duration-1000 ease-in-out ${idx === recommendationIndex ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
-                        >
-                           <h3 className="text-white text-2xl md:text-3xl font-black tracking-tighter mb-4">{rec.title}</h3>
-                           <p className="text-slate-400 text-base md:text-lg font-medium leading-relaxed">{rec.description}</p>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 shrink-0">
-                   <button className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black rounded-2xl shadow-xl shadow-red-900/40 transition-all active:scale-95 flex items-center justify-center gap-3 text-xs tracking-widest uppercase">
-                      <ShieldAlert size={18} /> ENVIAR ALERTA
-                   </button>
-                   <button className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-3 text-xs tracking-widest uppercase">
-                      <History size={18} /> HISTÓRICO
-                   </button>
-                </div>
-             </div>
-          </section>
-
-          {/* NOVAS SEÇÕES RESTAURADAS: RANKING E GARGALOS */}
-          <div className="flex flex-col lg:flex-row gap-8">
-             {/* RANKING DE CRITICIDADE */}
-             <div className="flex-1 bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
-                <div className="p-10 border-b border-slate-50">
-                   <h3 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-                      <ZapOff size={24} className="text-red-500" /> Ranking de Criticidade: Serviços
-                   </h3>
-                </div>
-                <div className="overflow-x-auto">
-                   <table className="w-full text-left">
-                      <thead className="bg-slate-50/50">
-                         <tr>
-                            <th className="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest"># Rank</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Serviço</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resolução</th>
-                            <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">SLA</th>
-                            <th className="px-10 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-50">
-                         {CRITICAL_ANALYSIS.map((item, idx) => (
-                           <tr 
-                              key={item.id} 
-                              onClick={() => setSelectedCriticalItem(item)}
-                              className="hover:bg-slate-50/80 transition-all cursor-pointer group"
-                            >
-                              <td className="px-10 py-6 font-black text-slate-400 group-hover:text-red-600 transition-colors">{(idx + 1).toString().padStart(2, '0')}</td>
-                              <td className="px-6 py-6 font-black text-slate-800 group-hover:text-blue-600 transition-colors">{item.label}</td>
-                              <td className="px-6 py-6 font-black text-slate-600">{item.resolution}%</td>
-                              <td className="px-6 py-6 font-black text-slate-600">{item.sla}d</td>
-                              <td className="px-10 py-6 flex items-center gap-3">
-                                 <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${item.status === 'critical' ? 'bg-red-50 text-red-600 border-red-100' : item.status === 'attention' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                                    {item.status === 'critical' ? 'Crítico' : item.status === 'attention' ? 'Atenção' : 'OK'}
-                                 </span>
-                                 <ChevronRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                              </td>
-                           </tr>
-                         ))}
-                      </tbody>
-                   </table>
-                </div>
-             </div>
-
-             {/* GARGALOS POR SETOR */}
-             <div className="lg:w-[400px] flex flex-col gap-6">
-                <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 p-10">
-                   <h3 className="text-xl font-black text-slate-800 mb-8 flex items-center gap-3">
-                      <BarChart3 size={20} className="text-blue-500" /> Gargalos por Setor
-                   </h3>
-                   <div className="space-y-6">
-                      {SECTOR_BOTTLENECKS.map((sector) => (
-                        <div 
-                          key={sector.id} 
-                          onClick={() => setSelectedBottleneckItem(sector)}
-                          className="p-6 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-lg transition-all border-l-4 cursor-pointer group" 
-                          style={{ borderLeftColor: sector.status === 'red' ? '#ef4444' : sector.status === 'amber' ? '#f59e0b' : sector.status === 'blue' ? '#3b82f6' : '#10b981' }}
-                        >
-                           <div className="flex justify-between items-start mb-4">
-                              <div>
-                                 <h4 className="font-black text-slate-900 text-lg leading-none mb-1 group-hover:text-blue-600 transition-colors">{sector.name}</h4>
-                                 <span className={`text-[9px] font-black uppercase tracking-widest ${sector.status === 'red' ? 'text-red-600' : sector.status === 'amber' ? 'text-amber-600' : 'text-blue-600'}`}>{sector.impact}</span>
-                              </div>
-                              <div className="text-right">
-                                 <p className="text-xl font-black text-slate-900 leading-none mb-1">{sector.pending}</p>
-                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pendentes</span>
-                              </div>
-                           </div>
-                           <div className="space-y-2">
-                              <div className="flex justify-between items-center text-[9px] font-black text-slate-400 uppercase tracking-widest">
-                                 <span>Capacidade Ocupada</span>
-                                 <span>{sector.capacity}</span>
-                              </div>
-                              <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                                 <div className={`h-full rounded-full transition-all duration-1000 ${sector.status === 'red' ? 'bg-red-500' : sector.status === 'amber' ? 'bg-amber-500' : 'bg-blue-500'}`} style={{ width: sector.capacity }} />
-                              </div>
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-             </div>
-          </div>
-        </main>
-      )}
-
-      {/* MODAL DETALHE SERVIÇO CRÍTICO (ABA EFICIÊNCIA) */}
-      {selectedCriticalItem && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedCriticalItem(null)} />
-           <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-in zoom-in-95 duration-500">
-              <div className={`p-8 text-white ${selectedCriticalItem.status === 'critical' ? 'bg-red-600' : 'bg-slate-800'}`}>
-                 <div className="flex justify-between items-center">
-                    <div>
-                       <span className="text-white/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-1">ANÁLISE DE CRITICIDADE</span>
-                       <h3 className="text-3xl font-black tracking-tighter leading-none">{selectedCriticalItem.label}</h3>
-                    </div>
-                    <button onClick={() => setSelectedCriticalItem(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><X size={20} /></button>
-                 </div>
-              </div>
-              <div className="p-8 space-y-8 overflow-y-auto custom-scrollbar">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">SLA ATUAL</p>
-                       <p className="text-3xl font-black text-red-600">{selectedCriticalItem.sla} dias</p>
-                    </div>
-                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">VARIAÇÃO MENSAL</p>
-                       <p className={`text-3xl font-black ${selectedCriticalItem.pendencyGrowth > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
-                          {selectedCriticalItem.pendencyGrowth > 0 ? '+' : ''}{selectedCriticalItem.pendencyGrowth}%
-                       </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                       <div className="bg-blue-50 border border-blue-100 p-6 rounded-[1.5rem] text-center">
+                          <p className="text-2xl font-black text-blue-700 leading-none mb-1">{selectedServiceDetail.statusCounts?.started.toLocaleString('pt-BR') || '0'}</p>
+                          <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">INICIADAS</span>
+                       </div>
+                       <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-[1.5rem] text-center">
+                          <p className="text-2xl font-black text-indigo-700 leading-none mb-1">{selectedServiceDetail.statusCounts?.answered.toLocaleString('pt-BR') || '0'}</p>
+                          <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">RESPONDIDAS</span>
+                       </div>
+                       <div className="bg-orange-50 border border-orange-100 p-6 rounded-[1.5rem] text-center">
+                          <p className="text-2xl font-black text-orange-700 leading-none mb-1">{selectedServiceDetail.statusCounts?.pending.toLocaleString('pt-BR') || '0'}</p>
+                          <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">PENDENTES</span>
+                       </div>
+                       <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-[1.5rem] text-center">
+                          <p className="text-2xl font-black text-emerald-700 leading-none mb-1">{selectedServiceDetail.statusCounts?.completed.toLocaleString('pt-BR') || '0'}</p>
+                          <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">CONCLUÍDAS</span>
+                       </div>
                     </div>
                  </div>
 
-                 <div className="space-y-3">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                       <AlertTriangle size={14} className="text-red-500" /> Causa do Gargalo
-                    </h4>
-                    <p className="p-5 bg-red-50/50 border border-red-100 rounded-2xl text-slate-700 font-medium leading-relaxed italic">
-                       "{selectedCriticalItem.bottleneckReason || 'Análise técnica em andamento para identificação de causa raiz.'}"
-                    </p>
-                 </div>
-
-                 <div className="space-y-3">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                       <Layers size={14} className="text-blue-500" /> Setores Afetados
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                       {selectedCriticalItem.sectorsInvolved.map((s: string, idx: number) => (
-                          <span key={idx} className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl font-black text-[10px] text-slate-600 uppercase tracking-widest">{s}</span>
-                       ))}
-                    </div>
-                 </div>
-              </div>
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-4">
-                 <button onClick={() => setSelectedCriticalItem(null)} className="flex-1 py-4 bg-slate-900 text-white font-black rounded-xl text-[10px] uppercase tracking-widest active:scale-95 transition-all">FECHAR ANÁLISE</button>
-              </div>
-           </div>
-        </div>
-      )}
-
-      {/* MODAL DETALHE GARGALO SETOR (ABA EFICIÊNCIA) */}
-      {selectedBottleneckItem && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedBottleneckItem(null)} />
-           <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-in zoom-in-95 duration-500">
-              <div className={`p-8 text-white ${selectedBottleneckItem.status === 'red' ? 'bg-red-600' : 'bg-blue-600'}`}>
-                 <div className="flex justify-between items-center">
-                    <div>
-                       <span className="text-white/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-1">MÉTRICAS DO DEPARTAMENTO</span>
-                       <h3 className="text-3xl font-black tracking-tighter leading-none">{selectedBottleneckItem.name}</h3>
-                    </div>
-                    <button onClick={() => setSelectedBottleneckItem(null)} className="p-2 bg-white/10 rounded-full"><X size={20} /></button>
-                 </div>
-              </div>
-              <div className="p-8 space-y-8">
-                 <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-                    <div>
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Líder Setorial</p>
-                       <p className="text-xl font-black text-slate-800">{selectedBottleneckItem.leader}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-600"><User size={24} /></div>
-                 </div>
-
-                 <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Serviços Sob Gestão</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                       {selectedBottleneckItem.services.map((serv: string, idx: number) => (
-                          <div key={idx} className="p-4 bg-white border border-slate-100 rounded-xl shadow-sm flex items-center gap-3">
-                             <div className="w-2 h-2 rounded-full bg-blue-500" />
-                             <span className="font-bold text-slate-700 text-xs">{serv}</span>
-                          </div>
-                       ))}
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-6 pt-4">
-                    <div className="text-center">
-                       <p className="text-4xl font-black text-slate-900 leading-none mb-2">{selectedBottleneckItem.pending}</p>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">PEDIDOS AGUARDANDO</p>
-                    </div>
-                    <div className="text-center">
-                       <p className="text-4xl font-black text-blue-600 leading-none mb-2">{selectedBottleneckItem.capacity}</p>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">UTILIZAÇÃO DA FROTA</p>
-                    </div>
-                 </div>
-              </div>
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-4">
-                 <button className="flex-1 py-4 bg-red-600 text-white font-black rounded-xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-3">
-                    <ShieldAlert size={16} /> NOTIFICAR GESTÃO
+                 <button onClick={() => setSelectedServiceDetail(null)} className="w-full py-6 bg-[#2563eb] hover:bg-blue-700 text-white font-black rounded-3xl text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-blue-200 transition-all active:scale-98">
+                    CONCLUIR ANÁLISE
                  </button>
-                 <button onClick={() => setSelectedBottleneckItem(null)} className="flex-1 py-4 bg-slate-200 text-slate-700 font-black rounded-xl text-[10px] uppercase tracking-widest">VOLTAR</button>
               </div>
            </div>
         </div>
       )}
-
     </div>
   );
 };
 
-const StatusBox: React.FC<{ label: string; value: number; color: string; bg: string }> = ({ label, value, color, bg }) => (
-  <div className={`p-4 rounded-2xl ${bg} border border-white/50 text-center flex flex-col justify-center shadow-sm`}>
-     <p className={`text-xl font-black ${color} leading-none mb-1`}>{value.toLocaleString('pt-BR')}</p>
-     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-  </div>
-);
-
-const EfficiencyCard: React.FC<{ label: string; value: number | string; icon: React.ReactNode; color: string; sub: string; formatter?: (v: any) => string }> = ({ label, value, icon, color, sub, formatter }) => {
-  const actualFormatter = formatter || ((v: any) => v.toLocaleString('pt-BR'));
-  const colorClasses: Record<string, string> = {
-    red: 'text-red-600 bg-red-50',
+const MetricCard: React.FC<{ label: string; value: number | string; subtitle?: string; icon: React.ReactNode; color: 'blue' | 'orange' | 'emerald' | 'red'; formatter?: (v: any) => string; delay?: string }> = ({ label, value, subtitle, icon, color, formatter, delay = "0s" }) => {
+  const iconColors = {
+    blue: 'text-blue-600 bg-blue-50',
     orange: 'text-orange-600 bg-orange-50',
-    rose: 'text-rose-600 bg-rose-50',
-    amber: 'text-amber-600 bg-amber-50',
+    emerald: 'text-emerald-600 bg-emerald-50',
+    red: 'text-red-600 bg-red-50'
   };
-  return (
-    <div className="bg-white rounded-[2rem] shadow-xl p-8 border border-slate-100 hover:scale-[1.02] transition-all">
-       <div className="flex justify-between items-start mb-6">
-          <div className={`p-3 rounded-2xl ${colorClasses[color]}`}>{React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<any>, { size: 24 })}</div>
-          <div className="text-right">
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-             <p className={`text-3xl md:text-4xl font-black ${color === 'red' ? 'text-red-600' : 'text-slate-900'}`}>
-                {typeof value === 'number' ? actualFormatter(value) : value}
-             </p>
+  
+  // Se houver subtitle, usamos o layout da aba de eficiência
+  if (subtitle) {
+    return (
+      <div 
+        style={{ animationDelay: delay }}
+        className={`bg-white p-8 rounded-[2rem] shadow-xl border border-gray-50 transition-all duration-500 animate-fade-in-up flex flex-col justify-between h-56 relative overflow-hidden group`}
+      >
+        <div className="flex justify-between items-start gap-4">
+          <div className={`p-5 rounded-2xl transition-all group-hover:scale-110 group-hover:rotate-3 ${iconColors[color]}`}>
+            {React.cloneElement(icon as React.ReactElement, { size: 28 })}
           </div>
-       </div>
-       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{sub}</p>
-    </div>
-  );
-};
-
-const MetricCard: React.FC<{ label: string; value: number; formatter?: (v: number) => string; icon: React.ReactNode; color: string; isFS?: boolean }> = ({ label, value, formatter, icon, color, isFS }) => {
-  const defaultFormatter = (val: number) => val.toLocaleString('pt-BR');
-  const actualFormatter = formatter || defaultFormatter;
-  const colorClasses: Record<string, string> = {
-    blue: 'text-blue-500 bg-blue-50',
-    orange: 'text-orange-500 bg-orange-50',
-    emerald: 'text-emerald-500 bg-emerald-50',
-  };
-  return (
-    <div className={`bg-white rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl border border-gray-100 hover:translate-y-[-5px] transition-all group relative overflow-hidden flex flex-col justify-center ${isFS ? 'p-8 md:p-10 2xl:p-14' : 'p-6 md:p-8 2xl:p-12'}`}>
-      <div className="flex justify-between items-start relative z-10 mb-6">
-        <p className="text-blue-600 font-black tracking-widest uppercase text-[10px] md:text-xs">{label}</p>
-        <div className={`rounded-xl transition-colors p-3 md:p-4 ${colorClasses[color] || 'bg-gray-50'} shadow-sm`}>
-          {React.isValidElement(icon) && React.cloneElement(icon as React.ReactElement<any>, { className: `size-6 md:size-8` })}
+          <div className="text-right flex flex-col items-end min-w-0">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</span>
+            <p className={`text-5xl font-black tracking-tighter leading-none ${color === 'red' ? 'text-red-600' : 'text-slate-900'}`}>
+              {typeof value === 'number' ? <AnimatedCounter target={value} formatter={formatter} /> : value}
+            </p>
+          </div>
+        </div>
+        <div className="mt-auto">
+          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-slate-400 transition-colors">{subtitle}</span>
         </div>
       </div>
-      <p className="font-black tracking-tighter text-gray-900 leading-none text-4xl md:text-6xl 2xl:text-[6rem] relative z-10">
-        <AnimatedCounter target={value} formatter={actualFormatter} />
-      </p>
+    );
+  }
+
+  return (
+    <div 
+      style={{ animationDelay: delay }}
+      className={`bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 group transition-all duration-500 animate-fade-in-up relative z-10 flex flex-col justify-between h-56`}
+    >
+      <div className="flex justify-between items-start">
+        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{label}</span>
+        <div className={`p-5 rounded-2xl transition-transform group-hover:scale-110 ${iconColors[color as any]}`}>{icon}</div>
+      </div>
+      <div>
+        <p className="text-6xl font-black text-slate-900 tracking-tighter leading-none">
+           {typeof value === 'number' ? <AnimatedCounter target={value} formatter={formatter} /> : value}
+        </p>
+      </div>
     </div>
   );
 };
