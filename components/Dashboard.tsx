@@ -36,7 +36,8 @@ import {
   ArrowUpRight,
   ChevronDown,
   TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon
+  TrendingDown as TrendingDownIcon,
+  ClipboardList
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 import { ServiceMetric, NotificationItem } from '../types';
@@ -84,17 +85,6 @@ interface EvaluationRecord {
   date: string;
 }
 
-interface SolicitationRecord {
-  id: string;
-  protocol: string;
-  citizen: string;
-  service: string;
-  department: string;
-  date: string;
-  status: 'pending' | 'processing' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-}
-
 interface SecretaryServiceRank {
   id: string;
   secretary: string;
@@ -105,6 +95,96 @@ interface SecretaryServiceRank {
   trend: 'up' | 'down' | 'stable';
   color: string;
 }
+
+interface StatusDetailState {
+  type: 'pending' | 'started' | 'completed';
+  label: string;
+  color: 'blue' | 'orange' | 'emerald';
+}
+
+const METRICS_DATA: ServiceMetric[] = [
+  { 
+    label: 'Limpeza Urbana', 
+    days: 1.2, 
+    totalPercentage: 75, 
+    totalSolicitations: 12540,
+    responsible: 'Dra. Márcia Silveira (EMLUR)',
+    responsibleRole: 'GESTOR DO SERVIÇO',
+    statusCounts: { started: 1540, answered: 8200, pending: 2150, completed: 650 },
+    sectors: [
+      { sigla: 'EM', percentage: 45, color: 'bg-blue-600' },
+      { sigla: 'SEURB', percentage: 35, color: 'bg-indigo-500' },
+      { sigla: 'SF', percentage: 20, color: 'bg-indigo-300' }
+    ]
+  },
+  { 
+    label: 'Iluminação Pública', 
+    days: 0.8, 
+    totalPercentage: 60, 
+    totalSolicitations: 8920,
+    responsible: 'Eng. Roberto Mascarenhas (SEURB)',
+    responsibleRole: 'COORDENADORA SEURB',
+    statusCounts: { started: 890, answered: 5400, pending: 1200, completed: 1430 },
+    sectors: [
+      { sigla: 'SEURB', percentage: 50, color: 'bg-blue-600' },
+      { sigla: 'EM', percentage: 30, color: 'bg-indigo-500' },
+      { sigla: 'SS', percentage: 20, color: 'bg-indigo-300' }
+    ]
+  },
+  { 
+    label: 'Poda de Árvores', 
+    days: 4.5, 
+    totalPercentage: 45, 
+    totalSolicitations: 5410,
+    responsible: 'Dra. Márcia Silveira (EMLUR)',
+    responsibleRole: 'SUPERVISOR OPERACIONAL',
+    statusCounts: { started: 1200, answered: 2100, pending: 1800, completed: 310 },
+    sectors: [
+      { sigla: 'EM', percentage: 60, color: 'bg-blue-600' },
+      { sigla: 'SEURB', percentage: 40, color: 'bg-indigo-500' }
+    ]
+  },
+  { 
+    label: 'Drenagem Pluvial', 
+    days: 3.2, 
+    totalPercentage: 30, 
+    totalSolicitations: 3215,
+    responsible: 'Eng. Roberto Mascarenhas (SEURB)',
+    responsibleRole: 'DIRETOR TÉCNICO',
+    statusCounts: { started: 450, answered: 1100, pending: 1500, completed: 165 },
+    sectors: [
+      { sigla: 'SEURB', percentage: 70, color: 'bg-blue-600' },
+      { sigla: 'SF', percentage: 30, color: 'bg-indigo-500' }
+    ]
+  },
+  { 
+    label: 'Manutenção Viária', 
+    days: 2.8, 
+    totalPercentage: 55, 
+    totalSolicitations: 10100,
+    responsible: 'Cel. Alberto Costa (SEMOB)',
+    responsibleRole: 'GESTOR SEMOB',
+    statusCounts: { started: 2100, answered: 4500, pending: 2500, completed: 1000 },
+    sectors: [
+      { sigla: 'SEMOB', percentage: 55, color: 'bg-blue-600' },
+      { sigla: 'SEURB', percentage: 25, color: 'bg-indigo-500' },
+      { sigla: 'SF', percentage: 20, color: 'bg-indigo-300' }
+    ]
+  },
+  { 
+    label: 'Sinalização', 
+    days: 1.5, 
+    totalPercentage: 80, 
+    totalSolicitations: 4800,
+    responsible: 'Juliana Paiva (SEMOB)',
+    responsibleRole: 'COORDENADORA TRÂNSITO',
+    statusCounts: { started: 300, answered: 3500, pending: 200, completed: 800 },
+    sectors: [
+      { sigla: 'SEMOB', percentage: 80, color: 'bg-blue-600' },
+      { sigla: 'SEURB', percentage: 20, color: 'bg-indigo-500' }
+    ]
+  }
+];
 
 const SECRETARY_RANKING_DATA: SecretaryServiceRank[] = [
   { 
@@ -165,104 +245,11 @@ const SECRETARY_RANKING_DATA: SecretaryServiceRank[] = [
   },
 ];
 
-const SOLICITATIONS_DATABASE: SolicitationRecord[] = [
-  { id: '1', protocol: '2025.04.102', citizen: 'Marcos Oliveira', service: 'Reparo de Iluminação', department: 'SEURB', date: 'Hoje, 09:15', status: 'processing', priority: 'medium' },
-  { id: '2', protocol: '2025.04.101', citizen: 'Carla Dias', service: 'Limpeza de Terreno', department: 'EMLUR', date: 'Hoje, 08:30', status: 'pending', priority: 'high' },
-  { id: '3', protocol: '2025.04.098', citizen: 'Roberto Santos', service: 'Poda de Árvore', department: 'EMLUR', date: 'Ontem', status: 'completed', priority: 'low' },
-  { id: '4', protocol: '2025.04.095', citizen: 'Aline Ferreira', service: 'Desobstrução de Bueiro', department: 'SEURB', date: 'Ontem', status: 'processing', priority: 'high' },
-  { id: '5', protocol: '2025.04.090', citizen: 'João Pedro', service: 'Sinalização Viária', department: 'SEMOB', date: 'Há 2 dias', status: 'completed', priority: 'medium' },
-  { id: '6', protocol: '2025.04.088', citizen: 'Lúcia Melo', service: 'Tapa-buraco', department: 'SEURB', date: 'Há 2 dias', status: 'pending', priority: 'medium' },
-];
-
 const EVALUATION_RECORDS: EvaluationRecord[] = [
   { id: '1', service: 'Iluminação Pública', citizen: 'Ana Maria', rating: 5, comment: 'Atendimento muito rápido, a rua ficou ótima.', date: 'Há 10 min' },
   { id: '2', service: 'Limpeza Urbana', citizen: 'Paulo Souza', rating: 4, comment: 'O serviço foi bem feito, mas demorou um pouco para chegar.', date: 'Há 1h' },
   { id: '3', service: 'Manutenção Viária', citizen: 'Juliana Lima', rating: 5, comment: 'Buracos tapados com perfeição na avenida principal.', date: 'Há 3h' },
   { id: '4', service: 'Poda de Árvores', citizen: 'Carlos Rocha', rating: 3, comment: 'A poda foi feita, mas deixaram alguns galhos na calçada.', date: 'Há 5h' },
-];
-
-const METRICS_DATA: ServiceMetric[] = [
-  { 
-    label: 'Limpeza Urbana', 
-    days: 1.2, 
-    totalPercentage: 75, 
-    totalSolicitations: 12540,
-    responsible: 'Carlos Silva (EMLUR)',
-    responsibleRole: 'GESTOR DO SERVIÇO',
-    statusCounts: { started: 1540, answered: 8200, pending: 2150, completed: 650 },
-    sectors: [
-      { sigla: 'EM', percentage: 45, color: 'bg-blue-600' },
-      { sigla: 'SEURB', percentage: 35, color: 'bg-indigo-500' },
-      { sigla: 'SF', percentage: 20, color: 'bg-indigo-300' }
-    ]
-  },
-  { 
-    label: 'Iluminação Pública', 
-    days: 0.8, 
-    totalPercentage: 60, 
-    totalSolicitations: 8920,
-    responsible: 'Ana Clara Melo',
-    responsibleRole: 'COORDENADORA SEURB',
-    statusCounts: { started: 890, answered: 5400, pending: 1200, completed: 1430 },
-    sectors: [
-      { sigla: 'SEURB', percentage: 50, color: 'bg-blue-600' },
-      { sigla: 'EM', percentage: 30, color: 'bg-indigo-500' },
-      { sigla: 'SS', percentage: 20, color: 'bg-indigo-300' }
-    ]
-  },
-  { 
-    label: 'Poda de Árvores', 
-    days: 4.5, 
-    totalPercentage: 45, 
-    totalSolicitations: 5410,
-    responsible: 'Ricardo Duarte',
-    responsibleRole: 'SUPERVISOR OPERACIONAL',
-    statusCounts: { started: 1200, answered: 2100, pending: 1800, completed: 310 },
-    sectors: [
-      { sigla: 'EM', percentage: 60, color: 'bg-blue-600' },
-      { sigla: 'SEURB', percentage: 40, color: 'bg-indigo-500' }
-    ]
-  },
-  { 
-    label: 'Drenagem Pluvial', 
-    days: 3.2, 
-    totalPercentage: 30, 
-    totalSolicitations: 3215,
-    responsible: 'Eng. Roberto Mascarenhas',
-    responsibleRole: 'DIRETOR TÉCNICO',
-    statusCounts: { started: 450, answered: 1100, pending: 1500, completed: 165 },
-    sectors: [
-      { sigla: 'SEURB', percentage: 70, color: 'bg-blue-600' },
-      { sigla: 'SF', percentage: 30, color: 'bg-indigo-500' }
-    ]
-  },
-  { 
-    label: 'Manutenção Viária', 
-    days: 2.8, 
-    totalPercentage: 55, 
-    totalSolicitations: 10100,
-    responsible: 'Alberto Costa',
-    responsibleRole: 'GESTOR SEMOB',
-    statusCounts: { started: 2100, answered: 4500, pending: 2500, completed: 1000 },
-    sectors: [
-      { sigla: 'SEMOB', percentage: 55, color: 'bg-blue-600' },
-      { sigla: 'SEURB', percentage: 25, color: 'bg-indigo-500' },
-      { sigla: 'SF', percentage: 20, color: 'bg-indigo-300' }
-    ]
-  },
-  { 
-    label: 'Sinalização', 
-    days: 1.5, 
-    totalPercentage: 80, 
-    totalSolicitations: 4800,
-    responsible: 'Juliana Paiva',
-    responsibleRole: 'COORDENADORA TRÂNSITO',
-    statusCounts: { started: 300, answered: 3500, pending: 200, completed: 800 },
-    sectors: [
-      { sigla: 'SEMOB', percentage: 80, color: 'bg-blue-600' },
-      { sigla: 'SEURB', percentage: 20, color: 'bg-indigo-500' }
-    ]
-  }
 ];
 
 const SECTOR_RANKING: SectorRanking[] = [
@@ -346,11 +333,12 @@ const RECOMMENDATIONS = [
 
 const Dashboard: React.FC = () => {
   const [total, setTotal] = useState(1026262);
-  const [activeTab, setActiveTab] = useState<'servicos' | 'solicitacoes' | 'eficiencia' | 'avaliacao'>('servicos');
+  const [activeTab, setActiveTab] = useState<'servicos' | 'eficiencia' | 'avaliacao'>('servicos');
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [recommendationIndex, setRecommendationIndex] = useState(0);
   const [selectedServiceDetail, setSelectedServiceDetail] = useState<ServiceMetric | null>(null);
   const [selectedCriticalItem, setSelectedCriticalItem] = useState<CriticalItem | null>(null);
+  const [selectedStatusDetail, setSelectedStatusDetail] = useState<StatusDetailState | null>(null);
   const [expandedRankId, setExpandedRankId] = useState<string | null>('1');
 
   const highlights: Highlight[] = [
@@ -390,7 +378,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col transition-all duration-500">
       {/* Header */}
-      <header className={`${(activeTab === 'eficiencia' || activeTab === 'avaliacao' || activeTab === 'solicitacoes') ? 'bg-[#0a0f1e] h-auto pb-8' : 'blue-gradient-bg pb-32'} text-white px-6 md:px-12 pt-8 rounded-b-[3.5rem] relative transition-all duration-700 z-10 shadow-2xl`}>
+      <header className={`${(activeTab === 'eficiencia' || activeTab === 'avaliacao') ? 'bg-[#0a0f1e] h-auto pb-8' : 'blue-gradient-bg pb-32'} text-white px-6 md:px-12 pt-8 rounded-b-[3.5rem] relative transition-all duration-700 z-10 shadow-2xl`}>
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="max-w-[1400px] mx-auto relative z-10">
@@ -410,13 +398,6 @@ const Dashboard: React.FC = () => {
                     ${activeTab === 'servicos' ? 'bg-white text-slate-900 shadow-2xl scale-105' : 'text-white/40 hover:text-white'}`}
                 >
                   <Activity size={16} /> Serviços
-                </button>
-                <button
-                  onClick={() => setActiveTab('solicitacoes')}
-                  className={`flex items-center gap-2.5 px-6 py-2.5 rounded-[1.5rem] transition-all duration-500 text-[11px] uppercase tracking-widest font-black whitespace-nowrap
-                    ${activeTab === 'solicitacoes' ? 'bg-white text-slate-900 shadow-2xl scale-105' : 'text-white/40 hover:text-white'}`}
-                >
-                  <FileText size={16} /> Performance
                 </button>
                 <button
                   onClick={() => setActiveTab('eficiencia')}
@@ -503,37 +484,56 @@ const Dashboard: React.FC = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className={`max-w-[1400px] mx-auto w-full px-6 md:px-12 pb-20 transition-all duration-700 relative z-20 ${(activeTab === 'eficiencia' || activeTab === 'avaliacao' || activeTab === 'solicitacoes') ? 'mt-12' : '-mt-16'}`}>
+      <main className={`max-w-[1400px] mx-auto w-full px-6 md:px-12 pb-20 transition-all duration-700 relative z-20 ${(activeTab === 'eficiencia' || activeTab === 'avaliacao') ? 'mt-12' : '-mt-16'}`}>
         
         {/* Metric Cards Row */}
-        {activeTab !== 'solicitacoes' && (
-          <div className={`grid grid-cols-1 ${activeTab === 'servicos' || activeTab === 'avaliacao' ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4 mb-8`}>
-            {activeTab === 'servicos' && (
-              <>
-                <MetricCard label="NOVAS SOLICITAÇÕES" value={1026262} icon={<FileText size={20} />} color="blue" delay="0s" />
-                <MetricCard label="EM ATENDIMENTO" value={51313} icon={<Clock size={20} />} color="orange" delay="0.1s" />
-                <MetricCard label="CONCLUÍDAS" value={2450} icon={<CheckCircle size={20} />} color="emerald" delay="0.2s" />
-              </>
-            )}
+        <div className={`grid grid-cols-1 ${activeTab === 'servicos' || activeTab === 'avaliacao' ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4 mb-8`}>
+          {activeTab === 'servicos' && (
+            <>
+              <MetricCard 
+                label="NOVAS SOLICITAÇÕES" 
+                value={1026262} 
+                icon={<FileText size={20} />} 
+                color="blue" 
+                delay="0s" 
+                onClick={() => setSelectedStatusDetail({ type: 'pending', label: 'Novas Solicitações', color: 'blue' })}
+              />
+              <MetricCard 
+                label="EM ATENDIMENTO" 
+                value={51313} 
+                icon={<Clock size={20} />} 
+                color="orange" 
+                delay="0.1s" 
+                onClick={() => setSelectedStatusDetail({ type: 'started', label: 'Em Atendimento', color: 'orange' })}
+              />
+              <MetricCard 
+                label="CONCLUÍDAS" 
+                value={2450} 
+                icon={<CheckCircle size={20} />} 
+                color="emerald" 
+                delay="0.2s" 
+                onClick={() => setSelectedStatusDetail({ type: 'completed', label: 'Concluídas', color: 'emerald' })}
+              />
+            </>
+          )}
 
-            {activeTab === 'eficiencia' && (
-              <>
-                <MetricCard label="GARGALOS CRÍTICOS" value={4} subtitle="SERVIÇOS TRAVADOS" icon={<AlertCircle size={20} />} color="red" delay="0s" />
-                <MetricCard label="SLA OVERFLOW" value={850} subtitle="DEMANDAS ATRASADAS" icon={<Clock size={20} />} color="orange" delay="0.1s" />
-                <MetricCard label="SOBRECARGA SETOR" value="SEURB" subtitle="DEPARTAMENTO CRÍTICO" icon={<BarChart3 size={20} />} color="red" delay="0.2s" />
-                <MetricCard label="QUEDA EFICIÊNCIA" value={18} formatter={(v) => `-${v}%`} subtitle="COMPARADO AO MÊS ANTERIOR" icon={<TrendingDown size={20} />} color="orange" delay="0.3s" />
-              </>
-            )}
+          {activeTab === 'eficiencia' && (
+            <>
+              <MetricCard label="GARGALOS CRÍTICOS" value={4} subtitle="SERVIÇOS TRAVADOS" icon={<AlertCircle size={20} />} color="red" delay="0s" />
+              <MetricCard label="SLA OVERFLOW" value={850} subtitle="DEMANDAS ATRASADAS" icon={<Clock size={20} />} color="orange" delay="0.1s" />
+              <MetricCard label="SOBRECARGA SETOR" value="SEURB" subtitle="DEPARTAMENTO CRÍTICO" icon={<BarChart3 size={20} />} color="red" delay="0.2s" />
+              <MetricCard label="QUEDA EFICIÊNCIA" value={18} formatter={(v) => `-${v}%`} subtitle="COMPARADO AO MÊS ANTERIOR" icon={<TrendingDown size={20} />} color="orange" delay="0.3s" />
+            </>
+          )}
 
-            {activeTab === 'avaliacao' && (
-              <>
-                <MetricCard label="NOTA MÉDIA GERAL" value={4.8} formatter={(v) => v.toFixed(1)} subtitle="SCORE DE SATISFAÇÃO" icon={<Star size={20} />} color="blue" delay="0s" />
-                <MetricCard label="FEEDBACKS POSITIVOS" value={8500} formatter={(v) => `${(v/100).toFixed(0)}%`} subtitle="SENTIMENTO POSITIVO" icon={<ThumbsUp size={20} />} color="emerald" delay="0.1s" />
-                <MetricCard label="SERVIÇOS AVALIADOS" value={1240} icon={<Award size={20} />} color="orange" delay="0.2s" />
-              </>
-            )}
-          </div>
-        )}
+          {activeTab === 'avaliacao' && (
+            <>
+              <MetricCard label="NOTA MÉDIA GERAL" value={4.8} formatter={(v) => v.toFixed(1)} subtitle="SCORE DE SATISFAÇÃO" icon={<Star size={20} />} color="blue" delay="0s" />
+              <MetricCard label="FEEDBACKS POSITIVOS" value={8500} formatter={(v) => `${(v/100).toFixed(0)}%`} subtitle="SENTIMENTO POSITIVO" icon={<ThumbsUp size={20} />} color="emerald" delay="0.1s" />
+              <MetricCard label="SERVIÇOS AVALIADOS" value={1240} icon={<Award size={20} />} color="orange" delay="0.2s" />
+            </>
+          )}
+        </div>
 
         {/* --- ABA SERVIÇOS --- */}
         {activeTab === 'servicos' && (
@@ -583,203 +583,6 @@ const Dashboard: React.FC = () => {
                 ))}
               </div>
             </section>
-          </div>
-        )}
-
-        {/* --- ABA SOLICITAÇÕES (PERFORMANCE) --- */}
-        {activeTab === 'solicitacoes' && (
-          <div className="animate-fade-in-up space-y-6">
-            
-            {/* Ranking de Performance - Visual Otimizado */}
-            <section className="space-y-4">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#1e3a8a] p-2.5 rounded-xl shadow-lg text-white">
-                    <Trophy size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tighter">Performance por Secretaria</h3>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-none">Status de volume e eficiência</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200">
-                  <span className="px-3 py-1 bg-white shadow-sm rounded-md text-[9px] font-black text-slate-900 uppercase">Geral</span>
-                  <span className="px-3 py-1 text-[9px] font-black text-slate-400 uppercase">Mensal</span>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
-                <div className="divide-y divide-slate-100">
-                  {SECRETARY_RANKING_DATA.map((item, idx) => (
-                    <div key={item.id} className={`group transition-all duration-300 ${expandedRankId === item.id ? 'bg-slate-50/40' : 'hover:bg-slate-50/20'}`}>
-                      <div 
-                        onClick={() => setExpandedRankId(expandedRankId === item.id ? null : item.id)}
-                        className="p-5 flex flex-col md:flex-row items-center gap-6 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-6 flex-1 w-full">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-base shrink-0 border-2 ${idx === 0 ? 'bg-yellow-400 text-white border-yellow-200 shadow-sm shadow-yellow-200' : 'bg-slate-100 text-slate-400 border-slate-50'}`}>
-                            {idx + 1}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2.5 mb-0.5">
-                              <h4 className="font-black text-slate-900 text-base tracking-tight truncate">{item.secretary}</h4>
-                              <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[8px] font-black rounded-md uppercase tracking-widest">{item.department}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
-                                <FileText size={10} /> {item.serviceCount.toLocaleString('pt-BR')}
-                              </p>
-                              <div className="w-0.5 h-0.5 rounded-full bg-slate-200" />
-                              <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest flex items-center gap-1">
-                                <CheckCircle size={10} className="text-emerald-500" /> {item.efficiency}%
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-8 w-full md:w-auto justify-between md:justify-end">
-                          <div className="flex flex-col items-end">
-                            {item.trend === 'up' ? (
-                              <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                                <TrendingUpIcon size={12} /> <span className="text-[8px] font-black">CRESCENTE</span>
-                              </div>
-                            ) : item.trend === 'down' ? (
-                              <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2 py-0.5 rounded-md">
-                                <TrendingDownIcon size={12} /> <span className="text-[8px] font-black">QUEDA</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1.5 text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                                <TrendingUpIcon size={12} className="rotate-90" /> <span className="text-[8px] font-black">ESTÁVEL</span>
-                              </div>
-                            )}
-                          </div>
-                          <ChevronDown size={20} className={`text-slate-300 transition-transform duration-300 ${expandedRankId === item.id ? 'rotate-180 text-blue-600' : ''}`} />
-                        </div>
-                      </div>
-
-                      {expandedRankId === item.id && (
-                        <div className="px-6 pb-6 animate-fade-in-up">
-                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
-                            <div className="lg:col-span-2 space-y-4">
-                              <h5 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <BarChart3 size={12} /> Distribuição Principal
-                              </h5>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                {item.topServices.map((srv, sIdx) => (
-                                  <div key={sIdx} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm group/srv hover:border-blue-200 transition-all">
-                                    <div className="flex justify-between items-start mb-2">
-                                      <p className="font-black text-slate-800 text-[11px] leading-tight group-hover/srv:text-blue-600 transition-colors">{srv.name}</p>
-                                      <span className="text-[8px] font-black text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-md">{srv.percentage}%</span>
-                                    </div>
-                                    <p className="text-lg font-black text-slate-900 tracking-tighter mb-1.5">{srv.count.toLocaleString('pt-BR')}</p>
-                                    <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                                      <div className={`${item.color} h-full`} style={{ width: `${srv.percentage}%` }} />
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="bg-slate-900 p-4 rounded-2xl text-white relative overflow-hidden flex flex-col justify-center">
-                              <div className="flex justify-between items-center mb-2">
-                                <span className="text-[8px] font-black text-white/40 uppercase tracking-widest">Média SLA</span>
-                                <span className="text-[9px] font-black text-emerald-400">Excelente</span>
-                              </div>
-                              <div className="flex items-end gap-2">
-                                <span className="text-3xl font-black tracking-tighter">1.4</span>
-                                <span className="text-[8px] font-black text-white/40 mb-1">DIAS</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Filtros e Busca Otimizados */}
-            <div className="flex flex-col md:flex-row gap-3 justify-between items-center bg-white p-4 rounded-[2rem] shadow-xl border border-slate-100">
-              <div className="relative w-full md:max-w-xs">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Pesquisar protocolo..." 
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500/10 text-xs font-medium outline-none transition-all"
-                />
-              </div>
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest rounded-xl hover:bg-black transition-all">
-                  <Filter size={14} /> Filtrar
-                </button>
-                <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-black text-[9px] uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
-                  Nova Demanda
-                </button>
-              </div>
-            </div>
-
-            {/* Tabela de Solicitações Compacta */}
-            <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
-              <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-left border-collapse">
-                  <thead className="bg-slate-50 border-b border-slate-100">
-                    <tr>
-                      <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Protocolo</th>
-                      <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Cidadão</th>
-                      <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Serviço</th>
-                      <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                      <th className="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {SOLICITATIONS_DATABASE.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="px-6 py-4">
-                          <span className="font-black text-blue-600 text-sm">#{item.protocol}</span>
-                          <div className="flex items-center gap-1.5 mt-0.5 text-[9px] text-slate-400 font-bold">
-                            <Calendar size={10} /> {item.date}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-black text-slate-900 text-sm mb-0.5 leading-none">{item.citizen}</p>
-                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">P. {item.priority === 'high' ? 'Crítica' : item.priority === 'medium' ? 'Média' : 'Baixa'}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="font-black text-slate-700 text-[11px] leading-tight mb-1">{item.service}</p>
-                          <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-md text-[7px] font-black uppercase tracking-widest">{item.department}</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
-                            item.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
-                            item.status === 'processing' ? 'bg-blue-50 text-blue-600' : 'bg-orange-50 text-orange-600'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${
-                              item.status === 'completed' ? 'bg-emerald-500' :
-                              item.status === 'processing' ? 'bg-blue-500 animate-pulse' : 'bg-orange-500'
-                            }`} />
-                            {item.status === 'completed' ? 'Concluído' :
-                             item.status === 'processing' ? 'Em Curso' : 'Pendente'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                            <MoreHorizontal size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total: <span className="text-slate-900">{SOLICITATIONS_DATABASE.length}</span></p>
-                <div className="flex gap-2">
-                  <button className="px-4 py-1.5 bg-white border border-slate-200 rounded-lg text-[8px] font-black uppercase tracking-widest text-slate-400 cursor-not-allowed">Anterior</button>
-                  <button className="px-4 py-1.5 bg-white border border-slate-200 rounded-lg text-[8px] font-black uppercase tracking-widest text-slate-900 hover:border-blue-500 transition-all">Próxima</button>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -946,6 +749,97 @@ const Dashboard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* MODAL LISTAGEM DETALHADA POR STATUS */}
+      {selectedStatusDetail && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 animate-fade-in-up">
+           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedStatusDetail(null)} />
+           <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col h-[85vh]">
+              {/* Header */}
+              <div className={`p-10 text-white flex justify-between items-center relative transition-colors ${
+                selectedStatusDetail.color === 'blue' ? 'bg-[#1e3a8a]' : 
+                selectedStatusDetail.color === 'orange' ? 'bg-orange-600' : 'bg-emerald-600'
+              }`}>
+                 <div className="flex items-center gap-5">
+                    <div className="bg-white/10 p-4 rounded-2xl border border-white/20 shadow-lg">
+                       <ClipboardList size={32} className="text-white" />
+                    </div>
+                    <div>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1 block">LISTAGEM DETALHADA</span>
+                       <h3 className="text-3xl font-black tracking-tighter leading-none">{selectedStatusDetail.label}</h3>
+                    </div>
+                 </div>
+                 <button onClick={() => setSelectedStatusDetail(null)} className="p-3 bg-black/10 hover:bg-black/20 rounded-full transition-colors">
+                    <X size={24} />
+                 </button>
+              </div>
+
+              {/* Table Body */}
+              <div className="flex-1 overflow-hidden flex flex-col p-10">
+                 <div className="bg-slate-50 rounded-[2rem] border border-slate-100 overflow-hidden flex-1 flex flex-col">
+                    <div className="overflow-x-auto custom-scrollbar flex-1">
+                       <table className="w-full text-left border-collapse">
+                          <thead className="bg-white border-b border-slate-200 sticky top-0 z-10">
+                             <tr>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Serviço</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status Atual</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Setor Responsável</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Secretaria Vinculada</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Quantidade</th>
+                             </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 bg-white">
+                             {METRICS_DATA.map((metric, idx) => (
+                               <tr key={idx} className="hover:bg-slate-50 transition-colors group">
+                                  <td className="px-8 py-6">
+                                     <span className="font-black text-slate-900 text-sm leading-tight block">{metric.label}</span>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                     <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                       selectedStatusDetail.color === 'blue' ? 'bg-blue-50 text-blue-600' :
+                                       selectedStatusDetail.color === 'orange' ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'
+                                     }`}>
+                                        <div className={`w-2 h-2 rounded-full ${
+                                          selectedStatusDetail.color === 'blue' ? 'bg-blue-500' :
+                                          selectedStatusDetail.color === 'orange' ? 'bg-orange-500 animate-pulse' : 'bg-emerald-500'
+                                        }`} />
+                                        {selectedStatusDetail.label}
+                                     </span>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                     <span className="font-bold text-slate-600 text-xs uppercase tracking-wider">{metric.sectors[0].sigla}</span>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                     <p className="font-black text-slate-800 text-xs leading-none">{metric.responsible?.split(' (')[0]}</p>
+                                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 block">
+                                       {metric.responsible?.split(' (')[1]?.replace(')', '') || 'ÓRGÃO VINCULADO'}
+                                     </span>
+                                  </td>
+                                  <td className="px-8 py-6 text-right">
+                                     <span className="text-xl font-black text-slate-900 tracking-tighter">
+                                        {selectedStatusDetail.type === 'pending' ? metric.statusCounts?.pending.toLocaleString('pt-BR') :
+                                         selectedStatusDetail.type === 'started' ? metric.statusCounts?.started.toLocaleString('pt-BR') :
+                                         metric.statusCounts?.completed.toLocaleString('pt-BR')}
+                                     </span>
+                                  </td>
+                               </tr>
+                             ))}
+                          </tbody>
+                       </table>
+                    </div>
+                 </div>
+                 <div className="mt-8 flex justify-end">
+                    <button 
+                      onClick={() => setSelectedStatusDetail(null)} 
+                      className="px-10 py-5 bg-[#0a0f1e] hover:bg-black text-white font-black rounded-[1.5rem] text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-[0.98]"
+                    >
+                       FECHAR LISTAGEM
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* MODAL ANÁLISE CRÍTICA - ATUALIZADO CONFORME REFERÊNCIA */}
       {selectedCriticalItem && (
@@ -1117,7 +1011,7 @@ const Dashboard: React.FC = () => {
                           <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">INICIADAS</span>
                        </div>
                        <div className="bg-indigo-50/50 border border-indigo-100 p-6 rounded-[1.5rem] text-center">
-                          <p className="text-3xl font-black text-indigo-700 leading-none mb-2">{selectedServiceDetail.statusCounts?.answered.toLocaleString('pt-BR') || '0'}</p>
+                          <p className="text-3xl font-black text-indigo-700 leading-none mb-2">{selectedStatusDetail?.type === 'started' ? <AnimatedCounter target={selectedServiceDetail.statusCounts?.answered || 0} /> : (selectedServiceDetail.statusCounts?.answered.toLocaleString('pt-BR') || '0')}</p>
                           <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">RESPONDIDAS</span>
                        </div>
                        <div className="bg-orange-50/50 border border-orange-100 p-6 rounded-[1.5rem] text-center">
@@ -1146,7 +1040,16 @@ const Dashboard: React.FC = () => {
   );
 };
 
-const MetricCard: React.FC<{ label: string; value: number | string; subtitle?: string; icon: React.ReactNode; color: 'blue' | 'orange' | 'emerald' | 'red'; formatter?: (v: any) => string; delay?: string }> = ({ label, value, subtitle, icon, color, formatter, delay = "0s" }) => {
+const MetricCard: React.FC<{ 
+  label: string; 
+  value: number | string; 
+  subtitle?: string; 
+  icon: React.ReactNode; 
+  color: 'blue' | 'orange' | 'emerald' | 'red'; 
+  formatter?: (v: any) => string; 
+  delay?: string;
+  onClick?: () => void;
+}> = ({ label, value, subtitle, icon, color, formatter, delay = "0s", onClick }) => {
   const iconColors = {
     blue: 'text-blue-600 bg-blue-50',
     orange: 'text-orange-600 bg-orange-50',
@@ -1154,34 +1057,11 @@ const MetricCard: React.FC<{ label: string; value: number | string; subtitle?: s
     red: 'text-red-600 bg-red-50'
   };
   
-  if (subtitle) {
-    return (
-      <div 
-        style={{ animationDelay: delay }}
-        className={`bg-white p-6 rounded-[1.5rem] shadow-lg border border-gray-50 transition-all duration-500 animate-fade-in-up flex flex-col justify-between h-44 relative overflow-hidden group`}
-      >
-        <div className="flex justify-between items-start gap-3">
-          <div className={`p-4 rounded-xl transition-all group-hover:scale-110 ${iconColors[color]}`}>
-            {React.cloneElement(icon as React.ReactElement, { size: 24 })}
-          </div>
-          <div className="text-right flex flex-col items-end min-w-0">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</span>
-            <p className={`text-3xl font-black tracking-tighter leading-none ${color === 'red' ? 'text-red-600' : 'text-slate-900'}`}>
-              {typeof value === 'number' ? <AnimatedCounter target={value} formatter={formatter} /> : value}
-            </p>
-          </div>
-        </div>
-        <div className="mt-auto">
-          <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest group-hover:text-slate-400 transition-colors truncate block">{subtitle}</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div 
       style={{ animationDelay: delay }}
-      className={`bg-white p-6 rounded-[2rem] shadow-lg border border-gray-100 group transition-all duration-500 animate-fade-in-up relative z-10 flex flex-col justify-between h-44`}
+      onClick={onClick}
+      className={`bg-white p-6 rounded-[2rem] shadow-lg border border-gray-100 group transition-all duration-500 animate-fade-in-up relative z-10 flex flex-col justify-between h-44 ${onClick ? 'cursor-pointer hover:shadow-2xl hover:-translate-y-1 active:scale-95' : ''}`}
     >
       <div className="flex justify-between items-start">
         <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{label}</span>
@@ -1193,6 +1073,9 @@ const MetricCard: React.FC<{ label: string; value: number | string; subtitle?: s
         <p className="text-4xl font-black text-slate-900 tracking-tighter leading-none">
            {typeof value === 'number' ? <AnimatedCounter target={value} formatter={formatter} /> : value}
         </p>
+        {subtitle && (
+           <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-2 block">{subtitle}</span>
+        )}
       </div>
     </div>
   );
