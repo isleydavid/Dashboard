@@ -38,7 +38,9 @@ import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
   ClipboardList,
-  ThumbsDown
+  ThumbsDown,
+  Eye,
+  ExternalLink
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 import { ServiceMetric, NotificationItem } from '../types';
@@ -86,6 +88,16 @@ interface EvaluationRecord {
   date: string;
 }
 
+interface EfficiencyFeedback {
+  id: string;
+  service: string;
+  feedback: string;
+  rating: number;
+  protocol: string;
+  sectors: string[];
+  personnel: string[];
+}
+
 interface SecretaryServiceRank {
   id: string;
   secretary: string;
@@ -107,6 +119,36 @@ interface EvalListState {
   type: 'positive' | 'negative';
   label: string;
 }
+
+const EFFICIENCY_FEEDBACK_DATA: EfficiencyFeedback[] = [
+  {
+    id: 'ef1',
+    service: 'Drenagem Pluvial',
+    feedback: 'Solicitação aberta há 15 dias e sem retorno da equipe de campo. A rua continua alagada.',
+    rating: 1,
+    protocol: '2024.08.12-DP-001',
+    sectors: ['SEURB', 'Manutenção Preventiva'],
+    personnel: ['Ricardo Oliveira', 'Ana Paula']
+  },
+  {
+    id: 'ef2',
+    service: 'Poda de Árvores',
+    feedback: 'O protocolo consta como concluído mas o serviço não foi realizado integralmente.',
+    rating: 2,
+    protocol: '2024.08.15-PA-042',
+    sectors: ['EMLUR', 'Fiscalização Ambiental'],
+    personnel: ['Sérgio Mendes']
+  },
+  {
+    id: 'ef3',
+    service: 'Manutenção Viária',
+    feedback: 'Buraco reaberto após chuva. Material utilizado parece ser de baixa qualidade.',
+    rating: 2,
+    protocol: '2024.08.10-MV-115',
+    sectors: ['SEMOB', 'Controle de Qualidade'],
+    personnel: ['Eng. Marcos Silva', 'Equipe Alpha']
+  }
+];
 
 const METRICS_DATA: ServiceMetric[] = [
   { 
@@ -348,6 +390,7 @@ const Dashboard: React.FC = () => {
   const [selectedCriticalItem, setSelectedCriticalItem] = useState<CriticalItem | null>(null);
   const [selectedStatusDetail, setSelectedStatusDetail] = useState<StatusDetailState | null>(null);
   const [selectedEvalList, setSelectedEvalList] = useState<EvalListState | null>(null);
+  const [selectedEffFeedback, setSelectedEffFeedback] = useState<EfficiencyFeedback | null>(null);
   const [expandedRankId, setExpandedRankId] = useState<string | null>('1');
 
   const highlights: Highlight[] = [
@@ -709,40 +752,109 @@ const Dashboard: React.FC = () => {
                   </div>
                </div>
             </div>
+
+            {/* NOVA LISTAGEM DE FEEDBACKS DE BAIXA EFICIÊNCIA */}
+            <section className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
+               <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                  <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
+                     <ThumbsDown size={24} className="text-orange-600" /> Feedback de Baixa Eficiência
+                  </h3>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registros de Gargalo Operacional</span>
+               </div>
+               <div className="p-8">
+                  <div className="overflow-x-auto custom-scrollbar">
+                     <table className="w-full text-left border-collapse">
+                        <thead>
+                           <tr>
+                              <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocolo / Serviço</th>
+                              <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resumo do Feedback</th>
+                              <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nota</th>
+                              <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                           </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                           {EFFICIENCY_FEEDBACK_DATA.map((item) => (
+                             <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
+                                <td className="py-6 pr-6">
+                                   <p className="text-[9px] font-black text-slate-400 uppercase mb-1">{item.protocol}</p>
+                                   <p className="font-black text-slate-900 text-sm">{item.service}</p>
+                                </td>
+                                <td className="py-6 pr-6">
+                                   <p className="text-xs font-medium text-slate-600 line-clamp-2 max-w-md italic">"{item.feedback}"</p>
+                                </td>
+                                <td className="py-6 pr-6">
+                                   <div className="flex items-center gap-1.5 bg-orange-50 px-3 py-1 rounded-lg w-fit">
+                                      <Star size={12} className="text-orange-600" fill="currentColor" />
+                                      <span className="font-black text-orange-600 text-xs">{item.rating}</span>
+                                   </div>
+                                </td>
+                                <td className="py-6 text-right">
+                                   <div className="flex items-center justify-end gap-3">
+                                      <button 
+                                        onClick={() => setSelectedEffFeedback(item)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all"
+                                      >
+                                         <Eye size={14} /> Detalhes
+                                      </button>
+                                      <button 
+                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                                        title="Ir para solicitação"
+                                      >
+                                         <ExternalLink size={18} />
+                                      </button>
+                                   </div>
+                                </td>
+                             </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+               </div>
+            </section>
           </div>
         )}
 
         {/* --- ABA AVALIAÇÃO --- */}
         {activeTab === 'avaliacao' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in-up">
-             <section className="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8 flex flex-col h-full">
+             <section className="bg-white rounded-[2rem] shadow-xl border border-gray-100 p-8 flex flex-col h-full overflow-hidden">
                 <div className="flex items-center gap-3 mb-8">
-                   <div className="bg-yellow-50 p-2 rounded-lg text-yellow-600"><Star size={20} fill="currentColor" /></div>
-                   <h3 className="font-black text-slate-900 text-lg tracking-tighter">Satisfação</h3>
+                   <div className="bg-yellow-50 p-2 rounded-lg text-yellow-600"><Users size={20} /></div>
+                   <h3 className="font-black text-slate-900 text-lg tracking-tighter">Avaliação por Serviço</h3>
                 </div>
-                <div className="space-y-6 flex-1">
-                   {[5, 4, 3, 2, 1].map((stars) => {
-                      const percentage = stars === 5 ? 85 : stars === 4 ? 10 : 2;
+                <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1">
+                   {METRICS_DATA.map((service, idx) => {
+                      // Mocking a rating and count for evaluation display
+                      const mockRating = (4 + Math.random()).toFixed(1);
+                      const mockCount = Math.floor(service.totalSolicitations * 0.15).toLocaleString('pt-BR');
                       return (
-                        <div key={stars} className="space-y-1.5">
-                           <div className="flex justify-between items-center">
-                              <div className="flex gap-0.5">
-                                 {[...Array(5)].map((_, i) => (
-                                    <Star key={i} size={12} className={i < stars ? 'text-yellow-400' : 'text-slate-200'} fill={i < stars ? 'currentColor' : 'none'} />
-                                 ))}
+                        <div key={idx} className="p-4 bg-slate-50 border border-slate-100 rounded-2xl group hover:bg-white hover:shadow-md transition-all">
+                           <div className="flex justify-between items-start mb-2">
+                              <span className="font-black text-slate-900 text-xs leading-tight block flex-1 mr-2">{service.label}</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                 <span className="text-[11px] font-black text-slate-900">{mockRating}</span>
+                                 <Star size={12} className="text-yellow-400" fill="currentColor" />
                               </div>
-                              <span className="text-[10px] font-black text-slate-400 uppercase">{percentage}%</span>
                            </div>
-                           <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden">
-                              <div className={`h-full ${stars >= 4 ? 'bg-emerald-500' : stars === 3 ? 'bg-yellow-400' : 'bg-red-500'}`} style={{ width: `${percentage}%` }} />
+                           <div className="flex justify-between items-end">
+                              <div>
+                                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Setores</p>
+                                 <div className="flex gap-1">
+                                    {service.sectors.map((s, sIdx) => (
+                                       <span key={sIdx} className="px-1.5 py-0.5 bg-white border border-slate-100 text-[7px] font-black rounded-md text-slate-600">
+                                          {s.sigla}
+                                       </span>
+                                    ))}
+                                 </div>
+                              </div>
+                              <div className="text-right">
+                                 <p className="text-base font-black text-slate-900 tracking-tighter leading-none">{mockCount}</p>
+                                 <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Avaliações</span>
+                              </div>
                            </div>
                         </div>
                       );
                    })}
-                </div>
-                <div className="mt-8 p-4 bg-slate-900 rounded-2xl text-center">
-                   <p className="text-white/40 text-[9px] font-black uppercase tracking-widest mb-1">Score IA</p>
-                   <p className="text-white text-3xl font-black tracking-tighter">9.2<span className="text-sm text-emerald-400">/10</span></p>
                 </div>
              </section>
 
@@ -779,6 +891,61 @@ const Dashboard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* MODAL DETALHES FEEDBACK EFICIÊNCIA */}
+      {selectedEffFeedback && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 animate-fade-in-up">
+           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedEffFeedback(null)} />
+           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col">
+              <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
+                 <div>
+                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 mb-1 block">DETALHES DO ATENDIMENTO</span>
+                    <h3 className="text-2xl font-black tracking-tighter">{selectedEffFeedback.protocol}</h3>
+                 </div>
+                 <button onClick={() => setSelectedEffFeedback(null)} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors">
+                    <X size={20} />
+                 </button>
+              </div>
+              <div className="p-8 space-y-8">
+                 <div className="space-y-4">
+                    <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                       <Layers size={14} /> SETORES ENVOLVIDOS
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                       {selectedEffFeedback.sectors.map((sector, idx) => (
+                          <span key={idx} className="px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-[10px] font-black text-slate-700">
+                             {sector}
+                          </span>
+                       ))}
+                    </div>
+                 </div>
+                 <div className="space-y-4">
+                    <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                       <Users size={14} /> PESSOAL DE ATENDIMENTO
+                    </h4>
+                    <div className="space-y-2">
+                       {selectedEffFeedback.personnel.map((person, idx) => (
+                          <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                             <div className="w-8 h-8 bg-slate-200 rounded-lg flex items-center justify-center text-slate-600">
+                                <User size={16} />
+                             </div>
+                             <span className="text-xs font-black text-slate-800">{person}</span>
+                          </div>
+                       ))}
+                    </div>
+                 </div>
+                 <div className="pt-4 flex gap-4">
+                    <button className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl transition-all">
+                       IR PARA A SOLICITAÇÃO
+                    </button>
+                    <button onClick={() => setSelectedEffFeedback(null)} className="px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 font-black rounded-2xl text-[10px] uppercase tracking-widest transition-all">
+                       VOLTAR
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* MODAL LISTAGEM DETALHADA POR STATUS */}
       {selectedStatusDetail && (
