@@ -37,7 +37,8 @@ import {
   ChevronDown,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
-  ClipboardList
+  ClipboardList,
+  ThumbsDown
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 import { ServiceMetric, NotificationItem } from '../types';
@@ -100,6 +101,11 @@ interface StatusDetailState {
   type: 'pending' | 'started' | 'completed';
   label: string;
   color: 'blue' | 'orange' | 'emerald';
+}
+
+interface EvalListState {
+  type: 'positive' | 'negative';
+  label: string;
 }
 
 const METRICS_DATA: ServiceMetric[] = [
@@ -250,6 +256,8 @@ const EVALUATION_RECORDS: EvaluationRecord[] = [
   { id: '2', service: 'Limpeza Urbana', citizen: 'Paulo Souza', rating: 4, comment: 'O serviço foi bem feito, mas demorou um pouco para chegar.', date: 'Há 1h' },
   { id: '3', service: 'Manutenção Viária', citizen: 'Juliana Lima', rating: 5, comment: 'Buracos tapados com perfeição na avenida principal.', date: 'Há 3h' },
   { id: '4', service: 'Poda de Árvores', citizen: 'Carlos Rocha', rating: 3, comment: 'A poda foi feita, mas deixaram alguns galhos na calçada.', date: 'Há 5h' },
+  { id: '5', service: 'Drenagem Pluvial', citizen: 'Roberto Santos', rating: 2, comment: 'A rua ainda continua alagando após a chuva.', date: 'Há 1 dia' },
+  { id: '6', service: 'Sinalização', citizen: 'Aline Ferreira', rating: 5, comment: 'Pintura da faixa de pedestre ficou excelente.', date: 'Há 2 dias' },
 ];
 
 const SECTOR_RANKING: SectorRanking[] = [
@@ -339,6 +347,7 @@ const Dashboard: React.FC = () => {
   const [selectedServiceDetail, setSelectedServiceDetail] = useState<ServiceMetric | null>(null);
   const [selectedCriticalItem, setSelectedCriticalItem] = useState<CriticalItem | null>(null);
   const [selectedStatusDetail, setSelectedStatusDetail] = useState<StatusDetailState | null>(null);
+  const [selectedEvalList, setSelectedEvalList] = useState<EvalListState | null>(null);
   const [expandedRankId, setExpandedRankId] = useState<string | null>('1');
 
   const highlights: Highlight[] = [
@@ -373,6 +382,11 @@ const Dashboard: React.FC = () => {
         document.exitFullscreen();
       }
     }
+  };
+
+  const getSectorsForService = (serviceName: string) => {
+    const metric = METRICS_DATA.find(m => m.label === serviceName);
+    return metric ? metric.sectors.map(s => s.sigla).join(', ') : 'N/A';
   };
 
   return (
@@ -529,8 +543,24 @@ const Dashboard: React.FC = () => {
           {activeTab === 'avaliacao' && (
             <>
               <MetricCard label="NOTA MÉDIA GERAL" value={4.8} formatter={(v) => v.toFixed(1)} subtitle="SCORE DE SATISFAÇÃO" icon={<Star size={20} />} color="blue" delay="0s" />
-              <MetricCard label="FEEDBACKS POSITIVOS" value={8500} formatter={(v) => `${(v/100).toFixed(0)}%`} subtitle="SENTIMENTO POSITIVO" icon={<ThumbsUp size={20} />} color="emerald" delay="0.1s" />
-              <MetricCard label="SERVIÇOS AVALIADOS" value={1240} icon={<Award size={20} />} color="orange" delay="0.2s" />
+              <MetricCard 
+                label="FEEDBACKS POSITIVOS" 
+                value={8500} 
+                formatter={(v) => `${(v/100).toFixed(0)}%`} 
+                subtitle="SENTIMENTO POSITIVO" 
+                icon={<ThumbsUp size={20} />} 
+                color="emerald" 
+                delay="0.1s" 
+                onClick={() => setSelectedEvalList({ type: 'positive', label: 'Feedbacks Positivos' })}
+              />
+              <MetricCard 
+                label="FEEDBACKS NEGATIVOS" 
+                value={1240} 
+                icon={<ThumbsDown size={20} />} 
+                color="orange" 
+                delay="0.2s" 
+                onClick={() => setSelectedEvalList({ type: 'negative', label: 'Feedbacks Negativos' })}
+              />
             </>
           )}
         </div>
@@ -831,6 +861,90 @@ const Dashboard: React.FC = () => {
                  <div className="mt-8 flex justify-end">
                     <button 
                       onClick={() => setSelectedStatusDetail(null)} 
+                      className="px-10 py-5 bg-[#0a0f1e] hover:bg-black text-white font-black rounded-[1.5rem] text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-[0.98]"
+                    >
+                       FECHAR LISTAGEM
+                    </button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL LISTAGEM DETALHADA DE FEEDBACKS */}
+      {selectedEvalList && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 animate-fade-in-up">
+           <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedEvalList(null)} />
+           <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col h-[85vh]">
+              {/* Header */}
+              <div className={`p-10 text-white flex justify-between items-center relative transition-colors ${
+                selectedEvalList.type === 'positive' ? 'bg-emerald-600' : 'bg-orange-600'
+              }`}>
+                 <div className="flex items-center gap-5">
+                    <div className="bg-white/10 p-4 rounded-2xl border border-white/20 shadow-lg">
+                       <MessageSquare size={32} className="text-white" />
+                    </div>
+                    <div>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 mb-1 block">DETALHAMENTO DE FEEDBACKS</span>
+                       <h3 className="text-3xl font-black tracking-tighter leading-none">{selectedEvalList.label}</h3>
+                    </div>
+                 </div>
+                 <button onClick={() => setSelectedEvalList(null)} className="p-3 bg-black/10 hover:bg-black/20 rounded-full transition-colors">
+                    <X size={24} />
+                 </button>
+              </div>
+
+              {/* Table Body */}
+              <div className="flex-1 overflow-hidden flex flex-col p-10">
+                 <div className="bg-slate-50 rounded-[2rem] border border-slate-100 overflow-hidden flex-1 flex flex-col">
+                    <div className="overflow-x-auto custom-scrollbar flex-1">
+                       <table className="w-full text-left border-collapse">
+                          <thead className="bg-white border-b border-slate-200 sticky top-0 z-10">
+                             <tr>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Serviço</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Setores Envolvidos</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nota</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descrição do Feedback</th>
+                             </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 bg-white">
+                             {EVALUATION_RECORDS
+                               .filter(record => selectedEvalList.type === 'positive' ? record.rating >= 4 : record.rating < 4)
+                               .map((record, idx) => (
+                               <tr key={idx} className="hover:bg-slate-50 transition-colors group">
+                                  <td className="px-8 py-6">
+                                     <span className="font-black text-slate-900 text-sm leading-tight block">{record.service}</span>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                     <span className="font-bold text-slate-600 text-xs uppercase tracking-wider">
+                                       {getSectorsForService(record.service)}
+                                     </span>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                     <div className="flex items-center gap-1">
+                                        <span className={`text-lg font-black tracking-tighter ${selectedEvalList.type === 'positive' ? 'text-emerald-600' : 'text-orange-600'}`}>
+                                          {record.rating}
+                                        </span>
+                                        <Star size={14} className={selectedEvalList.type === 'positive' ? 'text-yellow-400' : 'text-slate-300'} fill="currentColor" />
+                                     </div>
+                                  </td>
+                                  <td className="px-8 py-6">
+                                     <p className="text-xs font-medium text-slate-600 italic leading-relaxed">
+                                       "{record.comment}"
+                                     </p>
+                                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-2 block">
+                                       Enviado por: {record.citizen} • {record.date}
+                                     </span>
+                                  </td>
+                               </tr>
+                             ))}
+                          </tbody>
+                       </table>
+                    </div>
+                 </div>
+                 <div className="mt-8 flex justify-end">
+                    <button 
+                      onClick={() => setSelectedEvalList(null)} 
                       className="px-10 py-5 bg-[#0a0f1e] hover:bg-black text-white font-black rounded-[1.5rem] text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-[0.98]"
                     >
                        FECHAR LISTAGEM
