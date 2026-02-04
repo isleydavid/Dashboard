@@ -685,6 +685,7 @@ const Dashboard: React.FC = () => {
                </div>
             </section>
 
+            {/* AJUSTE DE LAYOUT: Criticidade à esquerda, Feedback de Baixa Eficiência à direita */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
                   <div className="p-6 border-b border-slate-50 flex items-center justify-between">
@@ -712,105 +713,56 @@ const Dashboard: React.FC = () => {
                      ))}
                   </div>
                </div>
-               
-               <div className="bg-white rounded-[2rem] shadow-xl border border-slate-100 p-8">
-                  <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
-                     <Trophy size={20} className="text-red-600" /> Gargalos Setoriais
-                  </h3>
-                  <div className="space-y-4 overflow-y-auto custom-scrollbar pr-1 max-h-[400px]">
-                    {SECTOR_RANKING.map((sector, idx) => (
-                      <div key={sector.id} className="relative p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl transition-all group overflow-hidden">
-                        <div className="absolute top-2 right-4 text-5xl font-black text-slate-200/40 group-hover:text-red-200/40 transition-colors pointer-events-none">
-                          {(idx + 1).toString().padStart(2, '0')}
-                        </div>
-                        <div className="relative z-10">
-                          <div className="flex items-center gap-3 mb-3">
-                             <div className={`p-2 rounded-lg ${sector.impact === 'Crítico' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}>
-                                <BarChart3 size={16} />
-                             </div>
-                             <div>
-                                <h4 className="font-black text-slate-900 text-sm leading-none">{sector.name}</h4>
-                                <span className="text-[8px] font-black text-red-600 uppercase tracking-widest">{sector.impact}</span>
-                             </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4 mb-3">
-                            <div>
-                               <p className="text-xl font-black text-slate-900 tracking-tighter">{sector.pending.toLocaleString('pt-BR')}</p>
-                               <span className="text-[8px] font-black text-slate-400 uppercase">Pendentes</span>
-                            </div>
-                            <div className="text-right">
-                               <p className="text-xl font-black text-red-600 tracking-tighter">{sector.efficiency}%</p>
-                               <span className="text-[8px] font-black text-slate-400 uppercase">Eficiência</span>
-                            </div>
-                          </div>
-                          <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
-                             <div className={`h-full ${sector.impact === 'Crítico' ? 'bg-red-600' : 'bg-blue-600'}`} style={{ width: `${100 - sector.efficiency}%` }} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-               </div>
-            </div>
 
-            {/* NOVA LISTAGEM DE FEEDBACKS DE BAIXA EFICIÊNCIA */}
-            <section className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
-               <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-                  <h3 className="text-xl font-black text-slate-800 flex items-center gap-3">
-                     <ThumbsDown size={24} className="text-orange-600" /> Feedback de Baixa Eficiência
-                  </h3>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registros de Gargalo Operacional</span>
-               </div>
-               <div className="p-8">
-                  <div className="overflow-x-auto custom-scrollbar">
-                     <table className="w-full text-left border-collapse">
-                        <thead>
-                           <tr>
-                              <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Protocolo / Serviço</th>
-                              <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resumo do Feedback</th>
-                              <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nota</th>
-                              <th className="pb-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
-                           </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                           {EFFICIENCY_FEEDBACK_DATA.map((item) => (
-                             <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
-                                <td className="py-6 pr-6">
-                                   <p className="text-[9px] font-black text-slate-400 uppercase mb-1">{item.protocol}</p>
-                                   <p className="font-black text-slate-900 text-sm">{item.service}</p>
-                                </td>
-                                <td className="py-6 pr-6">
-                                   <p className="text-xs font-medium text-slate-600 line-clamp-2 max-w-md italic">"{item.feedback}"</p>
-                                </td>
-                                <td className="py-6 pr-6">
-                                   <div className="flex items-center gap-1.5 bg-orange-50 px-3 py-1 rounded-lg w-fit">
-                                      <Star size={12} className="text-orange-600" fill="currentColor" />
-                                      <span className="font-black text-orange-600 text-xs">{item.rating}</span>
-                                   </div>
-                                </td>
-                                <td className="py-6 text-right">
-                                   <div className="flex items-center justify-end gap-3">
-                                      <button 
-                                        onClick={() => setSelectedEffFeedback(item)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all"
-                                      >
-                                         <Eye size={14} /> Detalhes
-                                      </button>
-                                      <button 
-                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
-                                        title="Ir para solicitação"
-                                      >
-                                         <ExternalLink size={18} />
-                                      </button>
-                                   </div>
-                                </td>
-                             </tr>
-                           ))}
-                        </tbody>
-                     </table>
+               {/* LISTAGEM DE FEEDBACKS DE BAIXA EFICIÊNCIA - Agora posicionado à direita */}
+               <section className="bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden">
+                  <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+                     <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                        <ThumbsDown size={20} className="text-orange-600" /> Feedback
+                     </h3>
+                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Gargalos Operacionais</span>
                   </div>
-               </div>
-            </section>
+                  <div className="p-4">
+                     <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse">
+                           <thead>
+                              <tr>
+                                 <th className="pb-4 text-[8px] font-black text-slate-400 uppercase tracking-widest">Protocolo / Serviço</th>
+                                 <th className="pb-4 text-[8px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                              </tr>
+                           </thead>
+                           <tbody className="divide-y divide-slate-100">
+                              {EFFICIENCY_FEEDBACK_DATA.map((item) => (
+                                <tr key={item.id} className="group hover:bg-slate-50/50 transition-colors">
+                                   <td className="py-4 pr-4">
+                                      <p className="text-[8px] font-black text-slate-400 uppercase mb-0.5">{item.protocol}</p>
+                                      <p className="font-black text-slate-900 text-xs">{item.service}</p>
+                                   </td>
+                                   <td className="py-4 text-right">
+                                      <div className="flex items-center justify-end gap-2">
+                                         <button 
+                                           onClick={() => setSelectedEffFeedback(item)}
+                                           className="p-1.5 bg-slate-900 text-white rounded-lg hover:bg-black transition-all"
+                                           title="Ver Detalhes"
+                                         >
+                                            <Eye size={12} />
+                                         </button>
+                                         <button 
+                                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                           title="Ir para solicitação"
+                                         >
+                                            <ExternalLink size={12} />
+                                         </button>
+                                      </div>
+                                   </td>
+                                </tr>
+                              ))}
+                           </tbody>
+                        </table>
+                     </div>
+                  </div>
+               </section>
+            </div>
           </div>
         )}
 
@@ -824,7 +776,6 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-1">
                    {METRICS_DATA.map((service, idx) => {
-                      // Mocking a rating and count for evaluation display
                       const mockRating = (4 + Math.random()).toFixed(1);
                       const mockCount = Math.floor(service.totalSolicitations * 0.15).toLocaleString('pt-BR');
                       return (
@@ -882,6 +833,20 @@ const Dashboard: React.FC = () => {
                                   ))}
                                </div>
                             </div>
+                            
+                            <div className="mb-4 pt-3 border-t border-slate-100/50">
+                               <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2">
+                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Serviço:</span>
+                                     <span className="text-[10px] font-black text-blue-700">{record.service}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Setores:</span>
+                                     <span className="text-[9px] font-bold text-slate-500 uppercase">{getSectorsForService(record.service)}</span>
+                                  </div>
+                               </div>
+                            </div>
+
                             <p className="text-[11px] font-medium text-slate-600 leading-snug italic">"{record.comment}"</p>
                          </div>
                       ))}
@@ -952,7 +917,6 @@ const Dashboard: React.FC = () => {
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 animate-fade-in-up">
            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedStatusDetail(null)} />
            <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col h-[85vh]">
-              {/* Header */}
               <div className={`p-10 text-white flex justify-between items-center relative transition-colors ${
                 selectedStatusDetail.color === 'blue' ? 'bg-[#1e3a8a]' : 
                 selectedStatusDetail.color === 'orange' ? 'bg-orange-600' : 'bg-emerald-600'
@@ -970,8 +934,6 @@ const Dashboard: React.FC = () => {
                     <X size={24} />
                  </button>
               </div>
-
-              {/* Table Body */}
               <div className="flex-1 overflow-hidden flex flex-col p-10">
                  <div className="bg-slate-50 rounded-[2rem] border border-slate-100 overflow-hidden flex-1 flex flex-col">
                     <div className="overflow-x-auto custom-scrollbar flex-1">
@@ -1043,7 +1005,6 @@ const Dashboard: React.FC = () => {
         <div className="fixed inset-0 z-[400] flex items-center justify-center p-6 animate-fade-in-up">
            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedEvalList(null)} />
            <div className="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col h-[85vh]">
-              {/* Header */}
               <div className={`p-10 text-white flex justify-between items-center relative transition-colors ${
                 selectedEvalList.type === 'positive' ? 'bg-emerald-600' : 'bg-orange-600'
               }`}>
@@ -1060,8 +1021,6 @@ const Dashboard: React.FC = () => {
                     <X size={24} />
                  </button>
               </div>
-
-              {/* Table Body */}
               <div className="flex-1 overflow-hidden flex flex-col p-10">
                  <div className="bg-slate-50 rounded-[2rem] border border-slate-100 overflow-hidden flex-1 flex flex-col">
                     <div className="overflow-x-auto custom-scrollbar flex-1">
@@ -1122,12 +1081,11 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL ANÁLISE CRÍTICA - ATUALIZADO CONFORME REFERÊNCIA */}
+      {/* MODAL ANÁLISE CRÍTICA */}
       {selectedCriticalItem && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 animate-fade-in-up">
            <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedCriticalItem(null)} />
-           <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col">
-              {/* Header */}
+           <div className="bg-white w-full max-xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col">
               <div className="bg-[#e11d48] p-10 text-white flex justify-between items-center relative">
                  <div className="flex items-center gap-5">
                     <div className="bg-white/10 p-4 rounded-2xl border border-white/20 shadow-lg">
@@ -1142,10 +1100,7 @@ const Dashboard: React.FC = () => {
                     <X size={24} />
                  </button>
               </div>
-
-              {/* Conteúdo do Modal */}
               <div className="p-10 space-y-10 max-h-[75vh] overflow-y-auto custom-scrollbar">
-                 {/* Secretário e Departamento */}
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -1171,8 +1126,6 @@ const Dashboard: React.FC = () => {
                        </div>
                     </div>
                  </div>
-
-                 {/* Motivo do Gargalo */}
                  <div className="space-y-4">
                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                        <AlertTriangle size={14} className="text-[#e11d48]" /> MOTIVO DO GARGALO (IA ANALYTICS)
@@ -1181,8 +1134,6 @@ const Dashboard: React.FC = () => {
                        "{selectedCriticalItem.bottleneckReason}"
                     </div>
                  </div>
-
-                 {/* Fluxo Operacional */}
                  <div className="space-y-6">
                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                        <Activity size={14} /> FLUXO OPERACIONAL E SLA POR SETOR
@@ -1208,8 +1159,6 @@ const Dashboard: React.FC = () => {
                        ))}
                     </div>
                  </div>
-
-                 {/* Botão de Fechar */}
                  <button 
                    onClick={() => setSelectedCriticalItem(null)} 
                    className="w-full py-6 bg-[#0a0f1e] hover:bg-black text-white font-black rounded-[1.5rem] text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-[0.98]"
@@ -1226,7 +1175,6 @@ const Dashboard: React.FC = () => {
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
            <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-md" onClick={() => setSelectedServiceDetail(null)} />
            <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col animate-fade-in-up">
-              {/* Header do Modal */}
               <div className="bg-[#1e3a8a] p-8 text-white flex justify-between items-center">
                  <div className="flex items-center gap-6">
                     <div className="bg-white/10 p-4 rounded-2xl border border-white/20">
@@ -1241,11 +1189,8 @@ const Dashboard: React.FC = () => {
                     <X size={28} />
                  </button>
               </div>
-
-              {/* Corpo do Modal */}
               <div className="p-10 space-y-10">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Responsável Direto */}
                     <div className="space-y-4">
                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                           <User size={14} /> RESPONSÁVEL DIRETO
@@ -1260,8 +1205,6 @@ const Dashboard: React.FC = () => {
                           </div>
                        </div>
                     </div>
-
-                    {/* Setores Participantes */}
                     <div className="space-y-4">
                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                           <Layers size={14} /> SETORES PARTICIPANTES
@@ -1276,8 +1219,6 @@ const Dashboard: React.FC = () => {
                        </div>
                     </div>
                  </div>
-
-                 {/* Resumo de Solicitações */}
                  <div className="space-y-6">
                     <div className="flex justify-between items-center">
                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -1285,7 +1226,6 @@ const Dashboard: React.FC = () => {
                        </h4>
                        <span className="text-sm font-black text-slate-900 tracking-tight">Total: {selectedServiceDetail.totalSolicitations.toLocaleString('pt-BR')}</span>
                     </div>
-                    
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                        <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-[1.5rem] text-center">
                           <p className="text-3xl font-black text-blue-700 leading-none mb-2">{selectedServiceDetail.statusCounts?.started.toLocaleString('pt-BR') || '0'}</p>
@@ -1305,11 +1245,9 @@ const Dashboard: React.FC = () => {
                        </div>
                     </div>
                  </div>
-
-                 {/* Botão de Ação */}
                  <button 
                    onClick={() => setSelectedServiceDetail(null)} 
-                   className="w-full py-6 bg-[#2563eb] hover:bg-blue-700 text-white font-black rounded-3xl text-[11px] uppercase tracking-[0.2em] shadow-2xl shadow-blue-200 transition-all active:scale-[0.98]"
+                   className="w-full py-6 bg-[#2563eb] hover:bg-blue-700 text-white font-black rounded-3xl text-[11px] uppercase tracking-[0.2em] shadow-blue-200 transition-all active:scale-[0.98]"
                  >
                     CONCLUIR ANÁLISE
                  </button>
